@@ -28,7 +28,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Add the executable name, and the source files
 add_executable(${PROGRAM_NAME}
-./src/main.cpp
+./src/init.cpp
 ./src/window.cpp
 ./src/logger.cpp)
 
