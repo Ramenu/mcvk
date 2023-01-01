@@ -14,6 +14,7 @@ static bool init_vulkan(VkInstance &instance
     ,VkDebugUtilsMessengerEXT &debug_messenger
 #endif
 );
+
 #ifndef NDEBUG
     static constexpr std::array validation_layers {
         "VK_LAYER_KHRONOS_validation"
@@ -74,14 +75,13 @@ static bool init_vulkan(VkInstance &instance
 #endif
 )
 {
-    static constexpr auto VK_API_VERSION = VK_MAKE_API_VERSION(VK_VERSION_1_0, 1, 0, 0);
     static constexpr VkApplicationInfo app_info {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pNext = nullptr,
         .pApplicationName = "Minecraft",
-        .applicationVersion = VK_API_VERSION,
+        .applicationVersion = VK_API_VERSION_1_0,
         .pEngineName = "No Engine",
-        .engineVersion = VK_API_VERSION,
+        .engineVersion = VK_API_VERSION_1_0,
         .apiVersion = VK_API_VERSION_1_0,
     };
 
@@ -142,6 +142,8 @@ static bool init_vulkan(VkInstance &instance
 
 }
 
+
+
 static std::vector<const char*> get_required_extensions()
 {
     u32 count {};
@@ -180,6 +182,7 @@ static std::vector<const char*> get_required_extensions()
         return true;
     }
 
+    // This is just a wrapper around 'vkCreateDebugUtilsMessengerEXT'
     static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, 
                                                  const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, 
                                                  const VkAllocationCallbacks* pAllocator, 
@@ -191,6 +194,7 @@ static std::vector<const char*> get_required_extensions()
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
+    // This is just a wrapper around 'vkDestroyDebugUtilsMessengerEXT'
     static void DestroyDebugUtilsMessengerEXT(VkInstance instance, 
                                               VkDebugUtilsMessengerEXT messenger, 
                                               const VkAllocationCallbacks *pAllocator) noexcept
@@ -201,11 +205,13 @@ static std::vector<const char*> get_required_extensions()
         Logger::error("Failed to load 'vkDestroyDebugUtilsMessengerExt' address");
     }
 
+    // Vulkan debugger callback
     static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                             VkDebugUtilsMessageTypeFlagsEXT,
                                                             const VkDebugUtilsMessengerCallbackDataEXT *p_callback_data,
                                                             void *) noexcept
     {
+        // call the appropriate logging function according to the severity level
         switch (severity) {
             default:
                 Logger::error("Unknown severity level");
