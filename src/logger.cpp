@@ -13,6 +13,21 @@ namespace Logger
 
     void error(const char *msg) noexcept 
     {
-        fprintf(stderr, COLOR_BOLDRED "ERROR: " COLOR_RESET "%s\n", msg);
+        fprintf(stderr, COLOR_RED "ERROR: " COLOR_RESET "%s\n", msg);
+    }
+
+    void diagnostic(const char *msg) noexcept
+    {
+        fprintf(stderr, COLOR_MAGENTA "DIAGNOSTIC: " COLOR_RESET "%s\n", msg);
+    }
+
+    void info(const char *msg) noexcept
+    {
+        fprintf(stderr, COLOR_MAGENTA "INFO: " COLOR_RESET "%s\n", msg);
+    }
+
+    void warning(const char *msg) noexcept
+    {
+        fprintf(stderr, COLOR_YELLOW "WARNING: " COLOR_RESET "%s\n", msg);
     }
 }

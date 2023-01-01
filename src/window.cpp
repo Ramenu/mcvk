@@ -12,6 +12,6 @@ Window::Window(unsigned wwidth, unsigned wheight, const char *wname) noexcept :
 
 Window::~Window() noexcept
 {
-    if (window)
+    if (window != nullptr)
         glfwDestroyWindow(window);
 }

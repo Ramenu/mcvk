@@ -6,12 +6,12 @@
 class Window
 {
     private:
-        unsigned width, height {};
+        unsigned width {}, height {};
         GLFWwindow *window {nullptr};
     public:
         Window(unsigned width, unsigned height, const char *name) noexcept;
         ~Window() noexcept;
-        constexpr auto get() { return window; }
+        constexpr const auto get() const { return window; }
 };
 
 #endif // MCVULKAN_WINDOW_HPP
