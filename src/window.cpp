@@ -1,6 +1,10 @@
 #include "mcvulkan/window.hpp"
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#ifndef NDEBUG
+    #include "mcvulkan/logger.hpp"
+    #include "mcvulkan/global.hpp"
+#endif
 
 Window::Window(unsigned wwidth, unsigned wheight, const char *wname) noexcept :
     width {wwidth}, height {wheight}
@@ -12,6 +16,9 @@ Window::Window(unsigned wwidth, unsigned wheight, const char *wname) noexcept :
 
 Window::~Window() noexcept
 {
-    if (window != nullptr)
+    if (window != nullptr) {
+        if constexpr (Global::IS_DEBUG_BUILD)
+            Logger::info("Destroying window");
         glfwDestroyWindow(window);
+    }
 }
