@@ -1,6 +1,7 @@
 #include "mcvulkan/window.hpp"
 #include "mcvulkan/logger.hpp"
 #include "mcvulkan/global.hpp"
+#include "mcvulkan/device.hpp"
 #include <vulkan/vulkan.h>
 #include <cstdio>
 #include <cstdlib>
@@ -13,6 +14,7 @@ static bool init_vulkan(VkInstance &instance
 #ifndef NDEBUG 
     ,VkDebugUtilsMessengerEXT &debug_messenger
 #endif
+, Device::LogicalDevice &device
 );
 
 #ifndef NDEBUG
@@ -47,25 +49,32 @@ static void game()
 {
     static constexpr unsigned WIDTH {500}, HEIGHT {500};
     Window window {WIDTH, HEIGHT, "Minecraft"};
-    VkInstance instance {};
-
-    #ifndef NDEBUG 
+    #ifndef NDEBUG
         VkDebugUtilsMessengerEXT debug_messenger {};
-        if (!init_vulkan(instance, debug_messenger))
-            Logger::fatal_error("Failed to initialize vulkan instance");
-    #else
-        if (!init_vulkan(instance))
-            Logger::fatal_error("Failed to initialize vulkan instance");
     #endif
+    VkInstance instance {};
+    // Introduce another scope to avoid problems with de-allocating
+    // the logical device after the instance has been destroyed
+    {
+        Device::LogicalDevice logical_device {};
 
-    while (!glfwWindowShouldClose(window.get())) {
-        glfwPollEvents();
+        #ifndef NDEBUG 
+            if (!init_vulkan(instance, debug_messenger, logical_device))
+                Logger::fatal_error("Failed to initialize vulkan instance");
+        #else
+            if (!init_vulkan(instance, device))
+                Logger::fatal_error("Failed to initialize vulkan instance");
+        #endif
+
+
+        while (!glfwWindowShouldClose(window.get())) {
+            glfwPollEvents();
+        }
     }
-
     #ifndef NDEBUG
         DestroyDebugUtilsMessengerEXT(instance, debug_messenger, nullptr);
     #endif
-    
+
     vkDestroyInstance(instance, nullptr);
 }
 
@@ -73,6 +82,7 @@ static bool init_vulkan(VkInstance &instance
 #ifndef NDEBUG
     ,VkDebugUtilsMessengerEXT &debug_messenger
 #endif
+, Device::LogicalDevice &device
 )
 {
     static constexpr VkApplicationInfo app_info {
@@ -136,12 +146,16 @@ static bool init_vulkan(VkInstance &instance
                 Logger::fatal_error("Failed to setup debug messenger");
                 return false;
             }
+
+            const Device::DeviceInfo device_info {Device::select_physical_device(instance)};
+
+            device = Device::LogicalDevice{device_info};
+            
             return true;
         }
     #endif
 
 }
-
 
 
 static std::vector<const char*> get_required_extensions()
