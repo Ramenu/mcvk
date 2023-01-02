@@ -30,7 +30,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_executable(${PROGRAM_NAME}
 ./src/init.cpp
 ./src/window.cpp
-./src/logger.cpp)
+./src/logger.cpp
+./src/device.cpp
+./src/queue.cpp)
 
 
 # Compiler flags
