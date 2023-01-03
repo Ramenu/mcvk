@@ -1,6 +1,11 @@
 #ifndef MCVULKAN_GLOBAL_HPP
 #define MCVULKAN_GLOBAL_HPP
 
+#define NON_MOVABLE_DEFAULT(T) \
+T &operator=(T &&) = delete; \
+T(T &&) = delete;
+
+
 namespace Global
 {
     // Should be used for comparsions between two values/objects.
