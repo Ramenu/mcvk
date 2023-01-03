@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 #include "mcvulkan/queue.hpp"
+#include "mcvulkan/vkcomponents.hpp"
 
 namespace Device
 {
@@ -20,6 +21,7 @@ namespace Device
         private:
             VkDevice device {VK_NULL_HANDLE};
             VkQueue graphics_queue {};
+            VkQueue presentation_queue {};
         public:
             constexpr LogicalDevice() noexcept = default;
             explicit LogicalDevice(const DeviceInfo &selected_device_info) noexcept;
@@ -46,7 +48,7 @@ namespace Device
             constexpr auto get() const { return device; }
     };
 
-    extern DeviceInfo select_physical_device(VkInstance instance) noexcept;
+    extern DeviceInfo select_physical_device(const VkComponents &components) noexcept;
 }
 
 #endif // MCVULKAN_DEVICE_HPP

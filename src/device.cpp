@@ -3,6 +3,7 @@
  #include "mcvulkan/global.hpp"
  #include <vector>
  #include <string>
+ #include <set>
  
 namespace Device
 {
@@ -71,16 +72,16 @@ namespace Device
         return info.features.geometryShader && info.queue_family_indices.is_complete();
     }
 
-    [[nodiscard]] DeviceInfo select_physical_device(VkInstance instance) noexcept
+    [[nodiscard]] DeviceInfo select_physical_device(const VkComponents &components) noexcept
     {
         u32 count {};
-        vkEnumeratePhysicalDevices(instance, &count, nullptr);
+        vkEnumeratePhysicalDevices(components.get_instance(), &count, nullptr);
         std::vector<VkPhysicalDevice> devices (count);
 
         if (count == 0)
             Logger::fatal_error("Could not find available GPUs with Vulkan support");
         
-        vkEnumeratePhysicalDevices(instance, &count, devices.data());
+        vkEnumeratePhysicalDevices(components.get_instance(), &count, devices.data());
         
         DeviceInfo previous_device_info {};
         DeviceInfo info {}, selected_device_info {};
@@ -112,9 +113,9 @@ namespace Device
                 }
             }
             #ifndef NDEBUG
-                info.queue_family_indices = Queue::find_queue_families(device, info.properties.deviceName);
+                info.queue_family_indices = Queue::find_queue_families(device, components.get_surface(), info.properties.deviceName);
             #else
-                info.queue_family_indices = Queue::find_queue_families(device);
+                info.queue_family_indices = Queue::find_queue_families(device, components.get_surface());
             #endif
 
             const bool can_use_device = can_use_physical_device(info);
@@ -161,18 +162,29 @@ namespace Device
     LogicalDevice::LogicalDevice(const DeviceInfo &selected_device_info) noexcept
     {
         constexpr float QUEUE_PRIORITY {1.0f};
-        VkDeviceQueueCreateInfo queue_create_info {};
-        queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queue_create_info.queueFamilyIndex = selected_device_info.queue_family_indices.graphics.value();
-        queue_create_info.queueCount = 1;
 
-        // set priority of queue to influence scheduling of command buffer
-        queue_create_info.pQueuePriorities = &QUEUE_PRIORITY;
+        std::vector<VkDeviceQueueCreateInfo> queue_create_infos {};
+
+        const std::set<u32> unique_queue_families {
+            selected_device_info.queue_family_indices.graphics.value(), 
+            selected_device_info.queue_family_indices.presentation.value()
+        };
+
+        for (auto queue_family : unique_queue_families) {
+            VkDeviceQueueCreateInfo queue_create_info {};
+            queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queue_create_info.queueFamilyIndex = queue_family;
+            queue_create_info.queueCount = 1;
+
+            // set priority of queue to influence scheduling of command buffer
+            queue_create_info.pQueuePriorities = &QUEUE_PRIORITY;
+            queue_create_infos.push_back(queue_create_info);
+        }
 
         VkDeviceCreateInfo device_create_info {};
         device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        device_create_info.pQueueCreateInfos = &queue_create_info;
-        device_create_info.queueCreateInfoCount = 1;
+        device_create_info.pQueueCreateInfos = queue_create_infos.data();
+        device_create_info.queueCreateInfoCount = static_cast<u32>(queue_create_infos.size());
         device_create_info.pEnabledFeatures = &selected_device_info.features;
 
         if (vkCreateDevice(selected_device_info.device, &device_create_info, nullptr, &device) != VK_SUCCESS)
@@ -183,6 +195,7 @@ namespace Device
         #endif
 
         vkGetDeviceQueue(device, selected_device_info.queue_family_indices.graphics.value(), 0, &graphics_queue);
+        vkGetDeviceQueue(device, selected_device_info.queue_family_indices.presentation.value(), 0, &presentation_queue);
     }
 
     LogicalDevice::~LogicalDevice() noexcept

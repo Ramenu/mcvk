@@ -7,7 +7,7 @@ namespace Queue
 {
 
     // Check which queue families are supported by the device
-    QueueFamilyIndices find_queue_families(VkPhysicalDevice device
+    QueueFamilyIndices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface
     #ifndef NDEBUG
         , const char *device_name
     #endif
@@ -28,7 +28,19 @@ namespace Queue
         std::vector<VkQueueFamilyProperties> families (count);
         vkGetPhysicalDeviceQueueFamilyProperties(device, &count, families.data());
 
+
         for (u32 i {}; i < families.size(); ++i) {
+            VkBool32 device_has_presentation_queue = false;
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &device_has_presentation_queue);
+
+            if (device_has_presentation_queue) {
+                indices.presentation = i;
+                #ifndef NDEBUG
+                    const auto msg = std::string{"Found presentation queue family on device "} + device_name;
+                    Logger::diagnostic(msg.c_str());
+                #endif
+            }
+
             if (families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphics = i;
                 #ifndef NDEBUG
@@ -36,6 +48,7 @@ namespace Queue
                     Logger::diagnostic(msg.c_str());
                 #endif
             }
+
             if (indices.is_complete()) {
                 #ifndef NDEBUG
                     const auto msg = std::string{"Found all required queue families on device "} + device_name;

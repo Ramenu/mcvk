@@ -11,10 +11,11 @@ namespace Queue
     {
         public:
             std::optional<u32> graphics {};
-            auto constexpr is_complete() const { return graphics.has_value(); }
+            std::optional<u32> presentation {};
+            auto constexpr is_complete() const { return graphics.has_value() && presentation.has_value(); }
     };
 
-    extern QueueFamilyIndices find_queue_families(VkPhysicalDevice device
+    extern QueueFamilyIndices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface
     #ifndef NDEBUG
         , const char *device_name
     #endif

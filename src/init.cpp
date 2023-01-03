@@ -11,11 +11,6 @@
 #include <vector>
 #include <cstring>
 
-struct VulkanInit
-{
-    VkComponents components;
-    Device::LogicalDevice device;
-};
 
 static void game();
 static void init_vulkan(const VkComponents &components, Device::LogicalDevice &device) noexcept;
@@ -65,7 +60,7 @@ static void game()
 
 static void init_vulkan(const VkComponents &components, Device::LogicalDevice &device) noexcept
 {
-    const Device::DeviceInfo device_info {Device::select_physical_device(components.get_instance())};
+    const Device::DeviceInfo device_info {Device::select_physical_device(components)};
     device = Device::LogicalDevice{device_info};
 }
 
