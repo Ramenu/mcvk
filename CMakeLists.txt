@@ -77,6 +77,8 @@ if (${COMPILING_CXX_PROJECT})
 		-Wuseless-cast
 		-Wvirtual-inheritance
 		-fstrict-enums
+		-Weffc++
+		-fimplicit-constexpr
 	)
 
 endif()
