@@ -21,7 +21,6 @@ namespace Device
             VkDevice device {VK_NULL_HANDLE};
             VkQueue graphics_queue {};
         public:
-            //LogicalDevice(const DeviceInfo &selected_device_info) noexcept; 
             constexpr LogicalDevice() noexcept = default;
             explicit LogicalDevice(const DeviceInfo &selected_device_info) noexcept;
             constexpr LogicalDevice& operator=(LogicalDevice &&other) noexcept
