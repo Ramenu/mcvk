@@ -28,7 +28,7 @@ namespace Queue
         std::vector<VkQueueFamilyProperties> families (count);
         vkGetPhysicalDeviceQueueFamilyProperties(device, &count, families.data());
 
-        for (usize i {}; i < families.size(); ++i) {
+        for (u32 i {}; i < families.size(); ++i) {
             if (families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphics = i;
                 #ifndef NDEBUG

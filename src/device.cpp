@@ -189,7 +189,7 @@ namespace Device
     {
         if (device != VK_NULL_HANDLE) {
             if constexpr (Global::IS_DEBUG_BUILD)
-                Logger::info("Destroying logical device");
+                Logger::diagnostic("De-allocating logical device");
             vkDestroyDevice(device, nullptr); 
         }
     }

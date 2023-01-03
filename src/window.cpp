@@ -1,6 +1,4 @@
 #include "mcvulkan/window.hpp"
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 #ifndef NDEBUG
     #include "mcvulkan/logger.hpp"
     #include "mcvulkan/global.hpp"
@@ -11,14 +9,22 @@ Window::Window(unsigned wwidth, unsigned wheight, const char *wname) noexcept :
 {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, wname, nullptr, nullptr);
+    self = glfwCreateWindow(width, height, wname, nullptr, nullptr);
 }
 
 Window::~Window() noexcept
 {
-    if (window != nullptr) {
+    if (self != nullptr) {
         if constexpr (Global::IS_DEBUG_BUILD)
-            Logger::info("Destroying window");
-        glfwDestroyWindow(window);
+            Logger::diagnostic("De-allocating window");
+        glfwDestroyWindow(self);
     }
+}
+
+void Window::create_surface(VkInstance instance, GLFWwindow &window, VkSurfaceKHR surface) noexcept
+{
+    if (glfwCreateWindowSurface(instance, &window, nullptr, &surface) != VK_SUCCESS) 
+        Logger::fatal_error("Failed to create window surface");
+    if constexpr (Global::IS_DEBUG_BUILD)
+        Logger::diagnostic("Window surface created successfully");
 }

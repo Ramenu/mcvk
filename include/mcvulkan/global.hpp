@@ -1,10 +1,17 @@
 #ifndef MCVULKAN_GLOBAL_HPP
 #define MCVULKAN_GLOBAL_HPP
 
-#define NON_MOVABLE_DEFAULT(T) \
+#define DELETE_NON_MOVABLE_DEFAULT(T) \
 T &operator=(T &&) = delete; \
 T(T &&) = delete;
 
+#define DELETE_NON_COPYABLE_DEFAULT(T) \
+T &operator=(const T &) = delete; \
+T(const T &) = delete;
+
+#define DELETE_NON_COPYABLE_NON_MOVABLE_DEFAULT(T) \
+DELETE_NON_COPYABLE_DEFAULT(T) \
+DELETE_NON_MOVABLE_DEFAULT(T)
 
 namespace Global
 {
