@@ -4,9 +4,15 @@
  #include <vector>
  #include <string>
  #include <set>
+ #include <array>
+ #include <cstring>
  
 namespace Device
 {
+
+    static constexpr std::array REQUIRED_DEVICE_EXTENSIONS {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
 
     static unsigned device_type_rating(VkPhysicalDeviceType type)
     {
@@ -66,10 +72,58 @@ namespace Device
         return Global::Compare::Equal;
     }
 
-    static inline bool can_use_physical_device(const DeviceInfo &info)
+    static bool device_has_extension_support(const DeviceInfo &info) noexcept
     {
-        // Geometry shader support is required, as well as specific queue family support
-        return info.features.geometryShader && info.queue_family_indices.is_complete();
+        u32 extension_count {};
+        vkEnumerateDeviceExtensionProperties(info.device, nullptr, &extension_count, nullptr);
+
+        if (extension_count == 0) {
+            if constexpr (Global::IS_DEBUG_BUILD) {
+                const auto msg = std::string{"No extensions found for device "} + info.properties.deviceName;
+                Logger::diagnostic(msg.c_str());
+            }
+            return false;
+        }
+
+        std::vector<VkExtensionProperties> available_device_extensions (extension_count);
+        vkEnumerateDeviceExtensionProperties(info.device, nullptr, &extension_count, available_device_extensions.data());
+
+        std::set<std::string> required_extensions {REQUIRED_DEVICE_EXTENSIONS.begin(), REQUIRED_DEVICE_EXTENSIONS.end()};
+
+        for (const auto &extension : available_device_extensions) {
+            if constexpr (Global::IS_DEBUG_BUILD) {
+                if (required_extensions.find(extension.extensionName) != required_extensions.end()) {
+                    const auto msg = std::string{"Device "} + info.properties.deviceName + " supports " + extension.extensionName;
+                    Logger::diagnostic(msg.c_str());
+                }
+            }
+            required_extensions.erase(extension.extensionName);
+        }
+
+        if constexpr (Global::IS_DEBUG_BUILD) {
+
+            // print out any extensions that were not found
+            for (const auto &extension : required_extensions) {
+                const auto msg = std::string{"Device "} + info.properties.deviceName + " does not support " + extension;
+                Logger::diagnostic(msg.c_str());
+            }
+
+            if (!required_extensions.empty()) {
+                const auto msg = std::string{"Device "} + info.properties.deviceName + " does not support required extensions";
+                Logger::diagnostic(msg.c_str());
+            }
+            else {
+                const auto msg = std::string{"Device "} + info.properties.deviceName + " supports required extensions";
+                Logger::diagnostic(msg.c_str());
+            }
+        }
+        return required_extensions.empty();
+    }
+
+    static inline bool can_use_physical_device(const DeviceInfo &info) noexcept
+    {
+        return info.features.geometryShader && info.queue_family_indices.is_complete() &&
+               device_has_extension_support(info);
     }
 
     [[nodiscard]] DeviceInfo select_physical_device(const VkComponents &components) noexcept

@@ -5,11 +5,9 @@
 #include "mcvulkan/vkcomponents.hpp"
 #include "mcvulkan/validationlayers.hpp"
 #include <vulkan/vulkan.h>
-#include <cstdio>
-#include <cstdlib>
-#include <array>
-#include <vector>
 #include <cstring>
+#include <cstdlib>
+#include <vector>
 
 
 static void game();
@@ -58,33 +56,35 @@ static void game()
 
 }
 
+// Components must be initialized before this is called, as it can affect the physical device selection
 static void init_vulkan(const VkComponents &components, Device::LogicalDevice &device) noexcept
 {
     const Device::DeviceInfo device_info {Device::select_physical_device(components)};
     device = Device::LogicalDevice{device_info};
 }
 
-static bool has_validation_layer_support() noexcept
-{
-    u32 count {};
-    vkEnumerateInstanceLayerProperties(&count, nullptr);
+#ifndef NDEBUG
+    static bool has_validation_layer_support() noexcept
+    {
+        u32 count {};
+        vkEnumerateInstanceLayerProperties(&count, nullptr);
 
-    std::vector<VkLayerProperties> layer_properties (count);
-    vkEnumerateInstanceLayerProperties(&count, layer_properties.data());
+        std::vector<VkLayerProperties> layer_properties (count);
+        vkEnumerateInstanceLayerProperties(&count, layer_properties.data());
 
-    for (auto validation_layer : VALIDATION_LAYERS) {
-        bool found = false;
-        for (const auto &properties : layer_properties) {
-            if (strcmp(validation_layer, properties.layerName) == 0)  {
-                found = true;
-                break;
+        for (auto validation_layer : VALIDATION_LAYERS) {
+            bool found = false;
+            for (const auto &properties : layer_properties) {
+                if (strcmp(validation_layer, properties.layerName) == 0)  {
+                    found = true;
+                    break;
+                }
             }
+
+            if (!found)
+                return false;
         }
 
-        if (!found)
-            return false;
+        return true;  
     }
-
-    return true;
-    
-}
+#endif
