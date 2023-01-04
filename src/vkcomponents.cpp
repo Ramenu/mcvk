@@ -131,7 +131,7 @@ VkComponents::~VkComponents() noexcept
             if (func != nullptr)
                 func(instance, messenger, nullptr);
             else
-                Logger::error("Failed load 'vkDestroyDebugUtilsMessengerEXT' address");
+                Logger::error("Failed to load 'vkDestroyDebugUtilsMessengerEXT' address");
         }
     #endif
 

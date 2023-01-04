@@ -145,12 +145,13 @@ namespace Device
         vkEnumeratePhysicalDevices(components.get_instance(), &count, devices.data());
         
         DeviceInfo previous_device_info {};
-        DeviceInfo info {}, selected_device_info {};
+        DeviceInfo selected_device_info {};
         bool appropriate_device_exists = false;
 
         // iterate through all the available devices in the
         // system and try to select the best one
         for (auto device : devices) {
+            DeviceInfo info {};
             info.device.self = device;
             VkPhysicalDeviceMemoryProperties device_mem_properties {};
 
@@ -192,7 +193,7 @@ namespace Device
             // device must be compatible in order to use it
             if (can_use_device) {
                 #ifndef NDEBUG
-                    const auto msg = std::string{"Device "} + info.properties.deviceName + " supports required features.";
+                    const auto msg = std::string{"Device "} + info.properties.deviceName + " supports all required features.";
                     Logger::diagnostic(msg.c_str());
                 #endif
                 // if the previous device wasnt initialized yet, set the selected device to this device

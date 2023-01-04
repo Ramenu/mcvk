@@ -10,7 +10,7 @@ SwapchainDetails::SwapchainDetails(const Device::PhysicalDeviceInfo physical_dev
     // Get surface capabilities
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device.self, surface, &capabilities);
 
-    u32 format_count;
+    u32 format_count {};
     vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device.self, surface, &format_count, nullptr);
 
     if (format_count != 0) {
@@ -30,7 +30,7 @@ SwapchainDetails::SwapchainDetails(const Device::PhysicalDeviceInfo physical_dev
         }
     #endif
 
-    u32 presentation_mode_count;
+    u32 presentation_mode_count {};
     vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device.self, surface, &presentation_mode_count, nullptr);
 
     if (presentation_mode_count != 0) {
