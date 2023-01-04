@@ -1,6 +1,7 @@
  #include "mcvulkan/device.hpp"
  #include "mcvulkan/logger.hpp"
  #include "mcvulkan/global.hpp"
+ #include "mcvulkan/swapchain.hpp"
  #include <vector>
  #include <string>
  #include <set>
@@ -11,7 +12,7 @@ namespace Device
 {
 
     static constexpr std::array REQUIRED_DEVICE_EXTENSIONS {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME // Not all GPUs can present images to a screen so this is required
     };
 
     static unsigned device_type_rating(VkPhysicalDeviceType type)
@@ -75,7 +76,7 @@ namespace Device
     static bool device_has_extension_support(const DeviceInfo &info) noexcept
     {
         u32 extension_count {};
-        vkEnumerateDeviceExtensionProperties(info.device, nullptr, &extension_count, nullptr);
+        vkEnumerateDeviceExtensionProperties(info.device.self, nullptr, &extension_count, nullptr);
 
         if (extension_count == 0) {
             if constexpr (Global::IS_DEBUG_BUILD) {
@@ -86,7 +87,7 @@ namespace Device
         }
 
         std::vector<VkExtensionProperties> available_device_extensions (extension_count);
-        vkEnumerateDeviceExtensionProperties(info.device, nullptr, &extension_count, available_device_extensions.data());
+        vkEnumerateDeviceExtensionProperties(info.device.self, nullptr, &extension_count, available_device_extensions.data());
 
         std::set<std::string> required_extensions {REQUIRED_DEVICE_EXTENSIONS.begin(), REQUIRED_DEVICE_EXTENSIONS.end()};
 
@@ -120,10 +121,16 @@ namespace Device
         return required_extensions.empty();
     }
 
-    static inline bool can_use_physical_device(const DeviceInfo &info) noexcept
+    static bool can_use_physical_device(const DeviceInfo &info, const VkSurfaceKHR surface) noexcept
     {
-        return info.features.geometryShader && info.queue_family_indices.is_complete() &&
-               device_has_extension_support(info);
+        const bool extensions_supported = device_has_extension_support(info);
+
+        if (extensions_supported) {
+            const auto swapchain_details = SwapchainDetails{info.device, surface};
+            return info.features.geometryShader && info.queue_family_indices.is_complete() &&
+                   swapchain_details.is_compatible_with_surface();
+        }
+        return false;
     }
 
     [[nodiscard]] DeviceInfo select_physical_device(const VkComponents &components) noexcept
@@ -144,15 +151,16 @@ namespace Device
         // iterate through all the available devices in the
         // system and try to select the best one
         for (auto device : devices) {
-            info.device = device;
+            info.device.self = device;
             VkPhysicalDeviceMemoryProperties device_mem_properties {};
 
             vkGetPhysicalDeviceProperties(device, &info.properties);
             vkGetPhysicalDeviceMemoryProperties(device, &device_mem_properties);
             vkGetPhysicalDeviceFeatures(device, &info.features);
 
+            info.device.name = info.properties.deviceName;
             #ifndef NDEBUG
-                const auto check_dev_msg = std::string{"Checking device: "} + info.properties.deviceName;
+                const auto check_dev_msg = std::string{"Checking device: "} + info.device.name;
                 Logger::info(check_dev_msg.c_str());
             #endif
 
@@ -167,12 +175,19 @@ namespace Device
                 }
             }
             #ifndef NDEBUG
-                info.queue_family_indices = Queue::find_queue_families(device, components.get_surface(), info.properties.deviceName);
+                const Device::PhysicalDeviceInfo physical_device_info {
+                    .self = device,
+                    .name = info.properties.deviceName
+                };
             #else
-                info.queue_family_indices = Queue::find_queue_families(device, components.get_surface());
+                const Device::PhysicalDeviceIfo physical_device_info {
+                    .self = device
+                };
             #endif
 
-            const bool can_use_device = can_use_physical_device(info);
+            info.queue_family_indices = Queue::find_queue_families(physical_device_info, components.get_surface());
+
+            const bool can_use_device = can_use_physical_device(info, components.get_surface());
 
             // device must be compatible in order to use it
             if (can_use_device) {
@@ -181,7 +196,7 @@ namespace Device
                     Logger::diagnostic(msg.c_str());
                 #endif
                 // if the previous device wasnt initialized yet, set the selected device to this device
-                if (previous_device_info.device == VK_NULL_HANDLE) {
+                if (previous_device_info.device.self == VK_NULL_HANDLE) {
                     appropriate_device_exists = true;
                     selected_device_info = info;
                 }
@@ -240,8 +255,10 @@ namespace Device
         device_create_info.pQueueCreateInfos = queue_create_infos.data();
         device_create_info.queueCreateInfoCount = static_cast<u32>(queue_create_infos.size());
         device_create_info.pEnabledFeatures = &selected_device_info.features;
+        device_create_info.enabledExtensionCount = static_cast<u32>(REQUIRED_DEVICE_EXTENSIONS.size());
+        device_create_info.ppEnabledExtensionNames = REQUIRED_DEVICE_EXTENSIONS.data();
 
-        if (vkCreateDevice(selected_device_info.device, &device_create_info, nullptr, &device) != VK_SUCCESS)
+        if (vkCreateDevice(selected_device_info.device.self, &device_create_info, nullptr, &device) != VK_SUCCESS)
             Logger::fatal_error("Failed to create logical device");
         #ifndef NDEBUG
             else

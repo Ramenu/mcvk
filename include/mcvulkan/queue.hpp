@@ -1,9 +1,9 @@
 #ifndef MCVULKAN_QUEUE_HPP
 #define MCVULKAN_QUEUE_HPP
 
-#include <vulkan/vulkan.h>
 #include <optional>
 #include "mcvulkan/types.hpp"
+#include "mcvulkan/physicaldeviceinfo.hpp"
 
 namespace Queue
 {
@@ -15,11 +15,7 @@ namespace Queue
             auto constexpr is_complete() const { return graphics.has_value() && presentation.has_value(); }
     };
 
-    extern QueueFamilyIndices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface
-    #ifndef NDEBUG
-        , const char *device_name
-    #endif
-    ) noexcept;
+    extern QueueFamilyIndices find_queue_families(Device::PhysicalDeviceInfo physical_device, VkSurfaceKHR surface) noexcept;
 }
 
 #endif // MCVULKAN_QUEUE_HPP

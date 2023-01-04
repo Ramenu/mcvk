@@ -4,12 +4,16 @@
 #include <vulkan/vulkan.h>
 #include "mcvulkan/queue.hpp"
 #include "mcvulkan/vkcomponents.hpp"
+#ifndef NDEBUG
+    #include <string>
+#endif
 
 namespace Device
 {
+
     struct DeviceInfo
     {
-        VkPhysicalDevice device {};
+        PhysicalDeviceInfo device {};
         VkPhysicalDeviceProperties properties {};
         VkPhysicalDeviceFeatures features {};
         VkMemoryHeap memory_heap {};
