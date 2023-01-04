@@ -33,7 +33,8 @@ add_executable(${PROGRAM_NAME}
 ./src/logger.cpp
 ./src/device.cpp
 ./src/queue.cpp
-./src/vkcomponents.cpp)
+./src/vkcomponents.cpp
+./src/swapchain.cpp)
 
 
 # Compiler flags
