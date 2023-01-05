@@ -4,15 +4,14 @@
 #include <vulkan/vulkan.h>
 #include "mcvulkan/queue.hpp"
 #include "mcvulkan/vkcomponents.hpp"
-#include "mcvulkan/swapchain.hpp"
 #include <GLFW/glfw3.h>
 #ifndef NDEBUG
     #include <string>
 #endif
+#include <set>
 
 namespace Device
 {
-
     struct DeviceInfo
     {
         PhysicalDeviceInfo device {};
@@ -20,12 +19,12 @@ namespace Device
         VkPhysicalDeviceFeatures features {};
         VkMemoryHeap memory_heap {};
         Queue::QueueFamilyIndices queue_family_indices {};
-        Swapchain swapchain {};
     };
 
     class LogicalDevice
     {
         private:
+            static std::set<VkDevice> devices_in_use;
             VkDevice device {VK_NULL_HANDLE};
             VkQueue graphics_queue {};
             VkQueue presentation_queue {};
@@ -47,14 +46,16 @@ namespace Device
 
                 other.device = VK_NULL_HANDLE;
             }
-            // delete copy operations
-            LogicalDevice(const LogicalDevice &other) noexcept = delete;
-            LogicalDevice& operator=(const LogicalDevice &other) noexcept = delete;
+            DELETE_NON_COPYABLE_DEFAULT(LogicalDevice)
 
             ~LogicalDevice() noexcept; 
             constexpr auto get() const { return device; }
+            static auto device_is_in_use(VkDevice device) noexcept
+            {
+                return devices_in_use.find(device) != devices_in_use.end();
+            }
     };
-
+    
     extern DeviceInfo select_physical_device(const VkComponents &components, GLFWwindow *window) noexcept;
 }
 

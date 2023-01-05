@@ -8,6 +8,7 @@
 #include "mcvulkan/logger.hpp"
 #include <GLFW/glfw3.h>
 #include <vector>
+#include "mcvulkan/device.hpp"
 
 class Swapchain
 {
@@ -57,14 +58,15 @@ class Swapchain
         ~Swapchain() noexcept
         {
             if (swapchain != VK_NULL_HANDLE) {
-                if (device != VK_NULL_HANDLE) {
+                if (Device::LogicalDevice::device_is_in_use(device)) {
                     if constexpr (Global::IS_DEBUG_BUILD)
                         Logger::info("De-allocating swapchain");
                     vkDestroySwapchainKHR(device, swapchain, nullptr);
                     swapchain = VK_NULL_HANDLE;
                 }
                 else
-                    Logger::fatal_error("Failed to de-allocate swapchain. Device is NULL.");
+                    Logger::fatal_error("Swapchain has been allocated but the device it is linked to is not in use. \
+                                         Please file a bug report if you see this error.");
 
             }
         }

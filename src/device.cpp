@@ -10,6 +10,7 @@
  
 namespace Device
 {
+    std::set<VkDevice> LogicalDevice::devices_in_use;
 
     static constexpr std::array REQUIRED_DEVICE_EXTENSIONS {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME // Not all GPUs can present images to a screen so this is required
@@ -121,13 +122,13 @@ namespace Device
         return required_extensions.empty();
     }
 
-    static bool can_use_physical_device(const DeviceInfo &info) noexcept
+    static bool can_use_physical_device(const DeviceInfo &info, const Swapchain &swapchain) noexcept
     {
         const bool extensions_supported = device_has_extension_support(info);
 
         if (extensions_supported) {
             return info.features.geometryShader && info.queue_family_indices.is_complete() &&
-                   info.swapchain.is_compatible();
+                   swapchain.is_compatible();
         }
         return false;
     }
@@ -186,9 +187,9 @@ namespace Device
             #endif
 
             info.queue_family_indices = Queue::QueueFamilyIndices{physical_device_info, components.get_surface()};
-            info.swapchain = Swapchain{info.device, components.get_surface(), window, info.queue_family_indices, VK_NULL_HANDLE};
+            const Swapchain swapchain {info.device, components.get_surface(), window, info.queue_family_indices, VK_NULL_HANDLE};
 
-            const bool can_use_device = can_use_physical_device(info);
+            const bool can_use_device = can_use_physical_device(info, swapchain);
 
             // device must be compatible in order to use it
             if (can_use_device) {
@@ -275,6 +276,8 @@ namespace Device
                 Logger::info("Logical device created successfully");
         #endif
 
+        devices_in_use.insert(device); // We are now using the device so add it to the set
+
         vkGetDeviceQueue(device, 
                          selected_device_info.queue_family_indices.get(Queue::GraphicsQueueIndex), 
                          0, 
@@ -292,6 +295,7 @@ namespace Device
             if constexpr (Global::IS_DEBUG_BUILD)
                 Logger::info("De-allocating logical device");
             vkDestroyDevice(device, nullptr); 
+            devices_in_use.erase(device); // No longer using the device so erase it
             device = VK_NULL_HANDLE;
         }
     }

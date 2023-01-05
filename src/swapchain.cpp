@@ -73,8 +73,9 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
     }
 
     // If the device is NULL, then the user probably wants to check if the device is compatible with the swapchain.
-    // The compatible flag has been set, so it is unnecessary to proceed from here.
-    if (ddevice != VK_NULL_HANDLE) {
+    // The compatible flag has been set, so it is unnecessary to proceed from here. Also check to make sure the
+    // device is in fact being used.
+    if (ddevice != VK_NULL_HANDLE && Device::LogicalDevice::device_is_in_use(ddevice)) {
 
         const auto swap_surface_format = choose_swap_surface_format(formats);
         const auto swap_presentation_mode = choose_swap_presentation_mode(presentation_modes);
