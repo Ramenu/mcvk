@@ -1,6 +1,8 @@
 #ifndef MCVULKAN_GLOBAL_HPP
 #define MCVULKAN_GLOBAL_HPP
 
+#include "mcvulkan/types.hpp"
+
 #define DELETE_NON_MOVABLE_DEFAULT(T) \
 T &operator=(T &&) = delete; \
 T(T &&) = delete;
@@ -15,6 +17,13 @@ DELETE_NON_MOVABLE_DEFAULT(T)
 
 namespace Global
 {
+    consteval auto FLAG_SUM(usize max)
+    {
+        usize sum {};
+        for (usize i = 0; i < max; ++i)
+            sum += 1 << i;
+        return sum;
+    }
     // Should be used for comparsions between two values/objects.
     // Order should be:
     // $1 > $2: Greater
