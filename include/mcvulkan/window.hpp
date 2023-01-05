@@ -9,9 +9,9 @@
 class Window
 {
     private:
-        unsigned width {}, height {};
+        int width {}, height {};
     public:
-        Window(unsigned width, unsigned height, const char *name) noexcept;
+        Window(int width, int height, const char *name) noexcept;
         DELETE_NON_COPYABLE_NON_MOVABLE_DEFAULT(Window)
         ~Window() noexcept;
         static void create_surface(VkInstance instance, GLFWwindow &window, VkSurfaceKHR surface) noexcept;
