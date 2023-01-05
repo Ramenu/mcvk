@@ -4,6 +4,8 @@
 #include <vulkan/vulkan.h>
 #include "mcvulkan/queue.hpp"
 #include "mcvulkan/vkcomponents.hpp"
+#include "mcvulkan/swapchain.hpp"
+#include <GLFW/glfw3.h>
 #ifndef NDEBUG
     #include <string>
 #endif
@@ -18,6 +20,7 @@ namespace Device
         VkPhysicalDeviceFeatures features {};
         VkMemoryHeap memory_heap {};
         Queue::QueueFamilyIndices queue_family_indices {};
+        Swapchain swapchain {};
     };
 
     class LogicalDevice
@@ -52,7 +55,7 @@ namespace Device
             constexpr auto get() const { return device; }
     };
 
-    extern DeviceInfo select_physical_device(const VkComponents &components) noexcept;
+    extern DeviceInfo select_physical_device(const VkComponents &components, GLFWwindow *window) noexcept;
 }
 
 #endif // MCVULKAN_DEVICE_HPP
