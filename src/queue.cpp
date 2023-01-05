@@ -6,9 +6,8 @@ namespace Queue
 {
 
     // Check which queue families are supported by the device
-    QueueFamilyIndices find_queue_families(const Device::PhysicalDeviceInfo device, VkSurfaceKHR surface) noexcept
+    QueueFamilyIndices::QueueFamilyIndices(const Device::PhysicalDeviceInfo device, VkSurfaceKHR surface) noexcept
     {
-        QueueFamilyIndices indices {};
         u32 count {};
 
         vkGetPhysicalDeviceQueueFamilyProperties(device.self, &count, nullptr);
@@ -16,9 +15,9 @@ namespace Queue
         if (count == 0) {
             #ifndef NDEBUG
                 const auto count_zero_msg = std::string{device.name} + " does not support any queue families";
-                Logger::diagnostic(count_zero_msg.c_str());
+                Logger::info(count_zero_msg.c_str());
             #endif
-            return indices;
+            return;
         }
         std::vector<VkQueueFamilyProperties> families (count);
         vkGetPhysicalDeviceQueueFamilyProperties(device.self, &count, families.data());
@@ -29,32 +28,31 @@ namespace Queue
             vkGetPhysicalDeviceSurfaceSupportKHR(device.self, i, surface, &device_has_presentation_queue);
 
             if (device_has_presentation_queue) {
-                indices.presentation = i;
+                this->set(FamilyIndex::PresentationQueueIndex, i);
                 #ifndef NDEBUG
                     const auto msg = std::string{"Found presentation queue family on device "} + device.name;
-                    Logger::diagnostic(msg.c_str());
+                    Logger::info(msg.c_str());
                 #endif
+                this->flags = static_cast<IndexFlags>(static_cast<usize>(this->flags)|static_cast<usize>(IndexFlags::PresentationQueueCompatible));
             }
 
             if (families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                indices.graphics = i;
+                this->set(FamilyIndex::GraphicsQueueIndex, i);
                 #ifndef NDEBUG
                     const auto msg = std::string{"Found graphics queue family on device "} + device.name;
-                    Logger::diagnostic(msg.c_str());
+                    Logger::info(msg.c_str());
                 #endif
+                this->flags = static_cast<IndexFlags>(static_cast<usize>(this->flags)|static_cast<usize>(IndexFlags::GraphicsQueueCompatible));
             }
 
-            if (indices.is_complete()) {
+            if (this->is_complete()) {
                 #ifndef NDEBUG
                     const auto msg = std::string{"Found all required queue families on device "} + device.name;
-                    Logger::diagnostic(msg.c_str());
+                    Logger::info(msg.c_str());
                 #endif
                 break;
             }
         }
-
-        return indices;
-
     }
 
 }
