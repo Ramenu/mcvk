@@ -4,6 +4,7 @@
 #include "mcvulkan/device.hpp"
 #include "mcvulkan/vkcomponents.hpp"
 #include "mcvulkan/validationlayers.hpp"
+#include "mcvulkan/swapchain.hpp"
 #include <vulkan/vulkan.h>
 #include <cstring>
 #include <cstdlib>
@@ -11,7 +12,10 @@
 
 
 static void game();
-static void init_vulkan(const VkComponents &components, Device::LogicalDevice &device) noexcept;
+static void init_vulkan(const VkComponents &components, 
+                        Device::LogicalDevice &device, 
+                        Swapchain &swapchain,
+                        GLFWwindow *window) noexcept;
 #ifndef NDEBUG
     static bool has_validation_layer_support() noexcept;
 #endif
@@ -21,10 +25,8 @@ int main()
     // Before initializing the game, check if validation layers are supported
     // (only necessary for debug builds)
     #ifndef NDEBUG
-        if (!has_validation_layer_support()) {
+        if (!has_validation_layer_support())
             Logger::fatal_error("Validation layers requested, but not available");
-            return EXIT_FAILURE;
-        }
     #endif
     glfwInit();
     game();
@@ -46,9 +48,11 @@ static void game()
     #endif
 
     Device::LogicalDevice device;
+    Swapchain swapchain {};
 
-    // Initialize base vulkan instance, setting up physical/logical devices, debug messengers, etc.
-    init_vulkan(components, device);
+    // Initialize base vulkan instance, setting up physical/logical devices, debug messengers, swapchain, etc.
+    init_vulkan(components, device, swapchain, window.self);
+
 
     while (!glfwWindowShouldClose(window.self)) {
         glfwPollEvents();
@@ -57,10 +61,18 @@ static void game()
 }
 
 // Components must be initialized before this is called, as it can affect the physical device selection
-static void init_vulkan(const VkComponents &components, Device::LogicalDevice &device) noexcept
+static void init_vulkan(const VkComponents &components, 
+                        Device::LogicalDevice &device, 
+                        Swapchain &swapchain,
+                        GLFWwindow *window) noexcept
 {
-    const Device::DeviceInfo device_info {Device::select_physical_device(components)};
+    const Device::DeviceInfo device_info {Device::select_physical_device(components, window)};
     device = Device::LogicalDevice{device_info};
+    swapchain = Swapchain{device_info.device, 
+                          components.get_surface(),
+                          window,
+                          device_info.queue_family_indices, 
+                          device.get()};
 }
 
 #ifndef NDEBUG

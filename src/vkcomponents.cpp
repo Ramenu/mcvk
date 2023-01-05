@@ -104,7 +104,7 @@
         if (vkCreateInstance(&instance_create_info, nullptr, &instance) != VK_SUCCESS)
             Logger::fatal_error("Failed to initialize vulkan instance");
         if constexpr (Global::IS_DEBUG_BUILD)
-            Logger::diagnostic("Created vulkan instance successfully");
+            Logger::info("Created vulkan instance successfully");
 
         #ifndef NDEBUG
             if (use_messenger)
@@ -116,7 +116,7 @@
         if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
             Logger::fatal_error("Failed to create window surface");
         if constexpr (Global::IS_DEBUG_BUILD)
-            Logger::diagnostic("Created window surface successfully");
+            Logger::info("Created window surface successfully");
     }
 #endif
 
@@ -126,7 +126,7 @@ VkComponents::~VkComponents() noexcept
     // De-allocate debug messenger
     #ifndef NDEBUG
         if (messenger != VK_NULL_HANDLE && uses_debug_messenger) {
-            Logger::diagnostic("De-allocating debug messenger");
+            Logger::info("De-allocating debug messenger");
             auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
             if (func != nullptr)
                 func(instance, messenger, nullptr);
@@ -137,13 +137,13 @@ VkComponents::~VkComponents() noexcept
 
     if (surface != VK_NULL_HANDLE) {
         if constexpr (Global::IS_DEBUG_BUILD)
-            Logger::diagnostic("De-allocating VkSurfaceKHR");
+            Logger::info("De-allocating VkSurfaceKHR");
         vkDestroySurfaceKHR(instance, surface, nullptr);
     }
 
     if (instance != VK_NULL_HANDLE) {
         if constexpr (Global::IS_DEBUG_BUILD)
-            Logger::diagnostic("De-allocating VkInstance");
+            Logger::info("De-allocating VkInstance");
         vkDestroyInstance(instance, nullptr);
     }
 }

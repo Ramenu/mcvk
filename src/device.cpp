@@ -81,7 +81,7 @@ namespace Device
         if (extension_count == 0) {
             if constexpr (Global::IS_DEBUG_BUILD) {
                 const auto msg = std::string{"No extensions found for device "} + info.properties.deviceName;
-                Logger::diagnostic(msg.c_str());
+                Logger::info(msg.c_str());
             }
             return false;
         }
@@ -95,7 +95,7 @@ namespace Device
             if constexpr (Global::IS_DEBUG_BUILD) {
                 if (required_extensions.find(extension.extensionName) != required_extensions.end()) {
                     const auto msg = std::string{"Device "} + info.properties.deviceName + " supports " + extension.extensionName;
-                    Logger::diagnostic(msg.c_str());
+                    Logger::info(msg.c_str());
                 }
             }
             required_extensions.erase(extension.extensionName);
@@ -106,34 +106,33 @@ namespace Device
             // print out any extensions that were not found
             for (const auto &extension : required_extensions) {
                 const auto msg = std::string{"Device "} + info.properties.deviceName + " does not support " + extension;
-                Logger::diagnostic(msg.c_str());
+                Logger::info(msg.c_str());
             }
 
             if (!required_extensions.empty()) {
                 const auto msg = std::string{"Device "} + info.properties.deviceName + " does not support required extensions";
-                Logger::diagnostic(msg.c_str());
+                Logger::info(msg.c_str());
             }
             else {
                 const auto msg = std::string{"Device "} + info.properties.deviceName + " supports required extensions";
-                Logger::diagnostic(msg.c_str());
+                Logger::info(msg.c_str());
             }
         }
         return required_extensions.empty();
     }
 
-    static bool can_use_physical_device(const DeviceInfo &info, const VkSurfaceKHR surface) noexcept
+    static bool can_use_physical_device(const DeviceInfo &info) noexcept
     {
         const bool extensions_supported = device_has_extension_support(info);
 
         if (extensions_supported) {
-            const auto swapchain_details = SwapchainDetails{info.device, surface};
             return info.features.geometryShader && info.queue_family_indices.is_complete() &&
-                   swapchain_details.is_compatible_with_surface();
+                   info.swapchain.is_compatible();
         }
         return false;
     }
 
-    [[nodiscard]] DeviceInfo select_physical_device(const VkComponents &components) noexcept
+    [[nodiscard]] DeviceInfo select_physical_device(const VkComponents &components, GLFWwindow *window) noexcept
     {
         u32 count {};
         vkEnumeratePhysicalDevices(components.get_instance(), &count, nullptr);
@@ -186,33 +185,43 @@ namespace Device
                 };
             #endif
 
-            info.queue_family_indices = Queue::find_queue_families(physical_device_info, components.get_surface());
+            info.queue_family_indices = Queue::QueueFamilyIndices{physical_device_info, components.get_surface()};
+            info.swapchain = Swapchain{info.device, components.get_surface(), window, info.queue_family_indices, VK_NULL_HANDLE};
 
-            const bool can_use_device = can_use_physical_device(info, components.get_surface());
+            const bool can_use_device = can_use_physical_device(info);
 
             // device must be compatible in order to use it
             if (can_use_device) {
                 #ifndef NDEBUG
                     const auto msg = std::string{"Device "} + info.properties.deviceName + " supports all required features.";
-                    Logger::diagnostic(msg.c_str());
+                    Logger::info(msg.c_str());
                 #endif
                 // if the previous device wasnt initialized yet, set the selected device to this device
                 if (previous_device_info.device.self == VK_NULL_HANDLE) {
                     appropriate_device_exists = true;
-                    selected_device_info = info;
+                    selected_device_info.device = info.device;
+                    selected_device_info.properties = info.properties;
+                    selected_device_info.features = info.features;
+                    selected_device_info.memory_heap = info.memory_heap;
+                    selected_device_info.queue_family_indices = info.queue_family_indices;
                 }
                 else {
                     // now we can actually compare the devices
                     const auto cmp = compare_device_specs(info, previous_device_info);
-                    if (cmp == Global::Compare::Greater)
-                        selected_device_info = info;
+                    if (cmp == Global::Compare::Greater) {
+                        selected_device_info.device = info.device;
+                        selected_device_info.properties = info.properties;
+                        selected_device_info.features = info.features;
+                        selected_device_info.memory_heap = info.memory_heap;
+                        selected_device_info.queue_family_indices = info.queue_family_indices;
+                    }
                 }
                 previous_device_info = std::move(info);
             }
             #ifndef NDEBUG 
                 else {
                     const auto msg = std::string{"Device "} + info.properties.deviceName + " does not support required features. Skipping...";
-                    Logger::diagnostic(msg.c_str());
+                    Logger::info(msg.c_str());
                 }
             #endif
 
@@ -223,7 +232,7 @@ namespace Device
 
         #ifndef NDEBUG
             const auto msg = std::string{"Selected physical device: "} + selected_device_info.properties.deviceName;
-            Logger::diagnostic(msg.c_str());
+            Logger::info(msg.c_str());
         #endif
 
         return selected_device_info;
@@ -233,12 +242,12 @@ namespace Device
     {
         constexpr float QUEUE_PRIORITY {1.0f};
 
-        std::vector<VkDeviceQueueCreateInfo> queue_create_infos {};
+        if (!selected_device_info.queue_family_indices.is_complete())
+            Logger::fatal_error("Selected device should have all required queue families. If you're seeing this error, report this as a bug.");
 
-        const std::set<u32> unique_queue_families {
-            selected_device_info.queue_family_indices.graphics.value(), 
-            selected_device_info.queue_family_indices.presentation.value()
-        };
+        std::vector<VkDeviceQueueCreateInfo> queue_create_infos {};
+        const std::set<u32> unique_queue_families {selected_device_info.queue_family_indices.array().begin(), 
+                                                   selected_device_info.queue_family_indices.array().end()};
 
         for (auto queue_family : unique_queue_families) {
             VkDeviceQueueCreateInfo queue_create_info {};
@@ -263,18 +272,25 @@ namespace Device
             Logger::fatal_error("Failed to create logical device");
         #ifndef NDEBUG
             else
-                Logger::diagnostic("Logical device created successfully");
+                Logger::info("Logical device created successfully");
         #endif
 
-        vkGetDeviceQueue(device, selected_device_info.queue_family_indices.graphics.value(), 0, &graphics_queue);
-        vkGetDeviceQueue(device, selected_device_info.queue_family_indices.presentation.value(), 0, &presentation_queue);
+        vkGetDeviceQueue(device, 
+                         selected_device_info.queue_family_indices.get(Queue::GraphicsQueueIndex), 
+                         0, 
+                         &graphics_queue);
+
+        vkGetDeviceQueue(device, 
+                         selected_device_info.queue_family_indices.get(Queue::PresentationQueueIndex), 
+                         0, 
+                         &presentation_queue);
     }
 
     LogicalDevice::~LogicalDevice() noexcept
     {
         if (device != VK_NULL_HANDLE) {
             if constexpr (Global::IS_DEBUG_BUILD)
-                Logger::diagnostic("De-allocating logical device");
+                Logger::info("De-allocating logical device");
             vkDestroyDevice(device, nullptr); 
         }
     }
