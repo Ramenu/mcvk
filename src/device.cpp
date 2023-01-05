@@ -292,6 +292,7 @@ namespace Device
             if constexpr (Global::IS_DEBUG_BUILD)
                 Logger::info("De-allocating logical device");
             vkDestroyDevice(device, nullptr); 
+            device = VK_NULL_HANDLE;
         }
     }
 

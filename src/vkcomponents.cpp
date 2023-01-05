@@ -128,8 +128,10 @@ VkComponents::~VkComponents() noexcept
         if (messenger != VK_NULL_HANDLE && uses_debug_messenger) {
             Logger::info("De-allocating debug messenger");
             auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
-            if (func != nullptr)
+            if (func != nullptr) {
                 func(instance, messenger, nullptr);
+                messenger = VK_NULL_HANDLE;
+            }
             else
                 Logger::error("Failed to load 'vkDestroyDebugUtilsMessengerEXT' address");
         }
@@ -139,11 +141,13 @@ VkComponents::~VkComponents() noexcept
         if constexpr (Global::IS_DEBUG_BUILD)
             Logger::info("De-allocating VkSurfaceKHR");
         vkDestroySurfaceKHR(instance, surface, nullptr);
+        surface = VK_NULL_HANDLE;
     }
 
     if (instance != VK_NULL_HANDLE) {
         if constexpr (Global::IS_DEBUG_BUILD)
             Logger::info("De-allocating VkInstance");
         vkDestroyInstance(instance, nullptr);
+        instance = VK_NULL_HANDLE;
     }
 }

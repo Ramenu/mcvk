@@ -61,6 +61,7 @@ class Swapchain
                     if constexpr (Global::IS_DEBUG_BUILD)
                         Logger::info("De-allocating swapchain");
                     vkDestroySwapchainKHR(device, swapchain, nullptr);
+                    swapchain = VK_NULL_HANDLE;
                 }
                 else
                     Logger::fatal_error("Failed to de-allocate swapchain. Device is NULL.");

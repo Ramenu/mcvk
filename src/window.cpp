@@ -20,6 +20,7 @@ Window::~Window() noexcept
         if constexpr (Global::IS_DEBUG_BUILD)
             Logger::info("De-allocating window");
         glfwDestroyWindow(self);
+        self = nullptr;
     }
 }
 
