@@ -9,8 +9,8 @@
 #include <string>
 
 
-inline constexpr static VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) noexcept;
-inline constexpr static VkPresentModeKHR choose_swap_presentation_mode(const std::vector<VkPresentModeKHR> &presentation_modes) noexcept;
+inline static VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) noexcept;
+inline static VkPresentModeKHR choose_swap_presentation_mode(const std::vector<VkPresentModeKHR> &presentation_modes) noexcept;
 inline static VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR &capabilities,
                                                   GLFWwindow *window) noexcept;
 
@@ -132,21 +132,39 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
         // swapchain successfully created, so initialize the device and swapchain
         device = ddevice;
         swapchain = tmp;
+
+        // Now get the handles of VkImage
+        u32 image_count {};
+        vkGetSwapchainImagesKHR(device, swapchain, &image_count, nullptr);
+
+        if (image_count != 0) {
+            images.resize(image_count);
+            vkGetSwapchainImagesKHR(device, swapchain, &image_count, images.data());
+        }
+        #ifndef NDEBUG
+            else {
+                Logger::error("No images found for swapchain");
+                return;
+            }
+        #endif
     }
 
 }
 
-inline constexpr static VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) noexcept
+inline static VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) noexcept
 {
     // We want to check for SRGB color space support, as it has more accurate
     // perceived colors and the standard color space for images.
 
-    for (const auto &format : formats) {
-        if (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-            if constexpr (Global::IS_DEBUG_BUILD)
-                Logger::info("Found SRGB color space support for swapchain");
-            return format;
-        }
+    const auto found = std::find_if(formats.begin(), formats.end(), [](const auto &format) {
+        return format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    });
+
+    // If found
+    if (found != formats.end()) {
+        if constexpr (Global::IS_DEBUG_BUILD)
+            Logger::info("Found SRGB color space support for swapchain");
+        return *found;
     }
 
     if constexpr (Global::IS_DEBUG_BUILD)
@@ -155,21 +173,25 @@ inline constexpr static VkSurfaceFormatKHR choose_swap_surface_format(const std:
     return formats[0];
 }
 
-inline constexpr static VkPresentModeKHR choose_swap_presentation_mode(const std::vector<VkPresentModeKHR> &presentation_modes) noexcept
+inline static VkPresentModeKHR choose_swap_presentation_mode(const std::vector<VkPresentModeKHR> &presentation_modes) noexcept
 {
     // Check for the most suitable presentation mode, 'VK_PRESENT_MODE_MAILBOX_KHR' is good for this as it renders
     // frames as fast as possible while also preventing tearing. Images that are queued are replaced with newer ones so
     // that there are no delays whatsoever. 
-    for (auto mode : presentation_modes) {
-        if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            if constexpr (Global::IS_DEBUG_BUILD)
-                Logger::info("VK_PRESENT_MODE_MAILBOX_KHR support found for swapchain");
-            return mode;
-        }
+    const auto found = std::find_if(presentation_modes.begin(), presentation_modes.end(), [](auto mode){ 
+        return mode == VK_PRESENT_MODE_MAILBOX_KHR;
+    });
+
+    // If found
+    if (found != std::end(presentation_modes)) {
+        if constexpr (Global::IS_DEBUG_BUILD)
+            Logger::info("VK_PRESENT_MODE_MAILBOX_KHR support found for swapchain");
+        return *found;
     }
 
     if constexpr (Global::IS_DEBUG_BUILD)
         Logger::info("VK_PRESENT_MODE_MAILBOX_KHR support not available, using VK_PRESENT_MODE_FIFO_KHR");
+
     // guaranteed to be available on every vulkan-supported device
     return VK_PRESENT_MODE_FIFO_KHR;
 }
