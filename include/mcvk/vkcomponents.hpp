@@ -1,10 +1,10 @@
-#ifndef MCVULKAN_VKCOMPONENTS_HPP 
-#define MCVULKAN_VKCOMPONENTS_HPP
+#ifndef MCVK_VKCOMPONENTS_HPP 
+#define MCVK_VKCOMPONENTS_HPP
 
-#include "mcvulkan/global.hpp"
+#include "mcvk/global.hpp"
 #include <vulkan/vulkan.h>
 #ifndef NDEBUG
-    #include "mcvulkan/logger.hpp"
+    #include "mcvk/logger.hpp"
 #endif
 #include <GLFW/glfw3.h>
 
@@ -30,5 +30,5 @@ class VkComponents
 };
 
 
-#endif // MCVULKAN_VKCOMPONENTS_HPP
+#endif // MCVK_VKCOMPONENTS_HPP
 

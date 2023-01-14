@@ -1,5 +1,5 @@
-#ifndef MCVULKAN_TYPES_HPP
-#define MCVULKAN_TYPES_HPP
+#ifndef MCVK_TYPES_HPP
+#define MCVK_TYPES_HPP
 
 #include <cstdint>
 
@@ -13,4 +13,4 @@ using i64 = std::int64_t;
 using u64 = std::uint64_t;
 using usize = std::size_t;
 
-#endif // MCVULKAN_TYPES_HPP
+#endif // MCVK_TYPES_HPP

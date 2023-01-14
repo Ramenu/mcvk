@@ -1,5 +1,5 @@
-#ifndef MCVULKAN_WINDOW_HPP
-#define MCVULKAN_WINDOW_HPP
+#ifndef MCVK_WINDOW_HPP
+#define MCVK_WINDOW_HPP
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -16,6 +16,8 @@ class Window
         ~Window() noexcept;
         static void create_surface(VkInstance instance, GLFWwindow &window, VkSurfaceKHR surface) noexcept;
         GLFWwindow *self {nullptr};
+        inline constexpr auto get_width() const { return this->width; }
+        inline constexpr auto get_height() const { return this->height; }
 };
 
-#endif // MCVULKAN_WINDOW_HPP
+#endif // MCVK_WINDOW_HPP

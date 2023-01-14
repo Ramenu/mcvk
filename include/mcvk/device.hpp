@@ -1,9 +1,9 @@
-#ifndef MCVULKAN_DEVICE_HPP
-#define MCVULKAN_DEVICE_HPP
+#ifndef MCVK_DEVICE_HPP
+#define MCVK_DEVICE_HPP
 
 #include <vulkan/vulkan.h>
-#include "mcvulkan/queue.hpp"
-#include "mcvulkan/vkcomponents.hpp"
+#include "mcvk/queue.hpp"
+#include "mcvk/vkcomponents.hpp"
 #include <GLFW/glfw3.h>
 #ifndef NDEBUG
     #include <string>
@@ -24,7 +24,7 @@ namespace Device
     class LogicalDevice
     {
         private:
-            static std::set<VkDevice> devices_in_use;
+            inline static std::set<VkDevice> devices_in_use {};
             VkDevice device {VK_NULL_HANDLE};
             VkQueue graphics_queue {};
             VkQueue presentation_queue {};
@@ -59,4 +59,4 @@ namespace Device
     extern DeviceInfo select_physical_device(const VkComponents &components, GLFWwindow *window) noexcept;
 }
 
-#endif // MCVULKAN_DEVICE_HPP
+#endif // MCVK_DEVICE_HPP

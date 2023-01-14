@@ -1,20 +1,20 @@
 #ifndef MC_VULKAN_SWAPCHAIN_HPP
 #define MC_VULKAN_SWAPCHAIN_HPP
 
-#include "mcvulkan/physicaldeviceinfo.hpp"
-#include "mcvulkan/types.hpp"
-#include "mcvulkan/queue.hpp"
-#include "mcvulkan/global.hpp"
-#include "mcvulkan/logger.hpp"
+#include "mcvk/physicaldeviceinfo.hpp"
+#include "mcvk/types.hpp"
+#include "mcvk/queue.hpp"
+#include "mcvk/global.hpp"
+#include "mcvk/logger.hpp"
 #include <GLFW/glfw3.h>
 #include <vector>
-#include "mcvulkan/device.hpp"
+#include "mcvk/device.hpp"
 
 class Swapchain
 {
     private:
         static constexpr usize __SWAPCHAIN_INDICES_CURRENT_LINE_ =  __LINE__;
-        enum CompatibleFlag {
+        enum CompatibleFlag : u8 {
             None = 0x0,
             CompatibleWithPresentation = 0x1,
             CompatibleWithSurfaceFormat = 0x2

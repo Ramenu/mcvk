@@ -1,12 +1,12 @@
-#ifndef LOGGER_HPP
-#define LOGGER_HPP
+#ifndef MCVK_LOGGER_HPP
+#define MCVK_LOGGER_HPP
 
 #include "types.hpp"
 
 namespace Logger
 {
     // for unrecoverable errors
-    extern void fatal_error(const char *msg) noexcept;
+    [[noreturn]] extern void fatal_error(const char *msg) noexcept;
 
     // for recoverable errors
     extern void error(const char *msg) noexcept;
@@ -27,4 +27,4 @@ namespace Logger
 
 }
 
-#endif // LOGGER_HPP
+#endif // MCVK_LOGGER_HPP

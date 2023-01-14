@@ -1,6 +1,7 @@
 #ifndef MCVULKAN_COLOR_H
 #define MCVULKAN_COLOR_H
 
+
 #define COLOR_RESET   "\033[0m"
 #define COLOR_BLACK   "\033[30m"      /* Black */
 #define COLOR_RED     "\033[31m"      /* Red */

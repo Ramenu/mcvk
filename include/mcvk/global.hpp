@@ -1,7 +1,7 @@
-#ifndef MCVULKAN_GLOBAL_HPP
-#define MCVULKAN_GLOBAL_HPP
+#ifndef MCVK_GLOBAL_HPP
+#define MCVK_GLOBAL_HPP
 
-#include "mcvulkan/types.hpp"
+#include "mcvk/types.hpp"
 
 #define DELETE_NON_MOVABLE_DEFAULT(T) \
 T &operator=(T &&) = delete; \
@@ -19,10 +19,7 @@ namespace Global
 {
     consteval auto FLAG_SUM(usize max)
     {
-        usize sum {};
-        for (usize i = 0; i < max; ++i)
-            sum += 1 << i;
-        return sum;
+        return (1 << (max - 1)) * 2 - 1;
     }
     // Should be used for comparsions between two values/objects.
     // Order should be:
@@ -46,4 +43,4 @@ namespace Global
 
 }
 
-#endif // MCVULKAN_GLOBAL_HPP
+#endif // MCVK_GLOBAL_HPP
