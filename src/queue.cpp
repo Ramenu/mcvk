@@ -1,6 +1,6 @@
-#include "mcvulkan/queue.hpp"
+#include "mcvk/queue.hpp"
 #include <vector>
-#include "mcvulkan/logger.hpp"
+#include "mcvk/logger.hpp"
 
 namespace Queue
 {
@@ -22,7 +22,6 @@ namespace Queue
         std::vector<VkQueueFamilyProperties> families (count);
         vkGetPhysicalDeviceQueueFamilyProperties(device.self, &count, families.data());
 
-
         for (u32 i {}; i < families.size(); ++i) {
             VkBool32 device_has_presentation_queue = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(device.self, i, surface, &device_has_presentation_queue);
@@ -33,8 +32,9 @@ namespace Queue
                     const auto msg = std::string{"Found presentation queue family on device "} + device.name;
                     Logger::info(msg.c_str());
                 #endif
-                this->flags = static_cast<IndexFlags>(static_cast<usize>(this->flags)|static_cast<usize>(IndexFlags::PresentationQueueCompatible));
+                this->flags = static_cast<IndexFlags>(this->flags|IndexFlags::PresentationQueueCompatible);
             }
+            
 
             if (families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 this->set(FamilyIndex::GraphicsQueueIndex, i);
@@ -42,7 +42,7 @@ namespace Queue
                     const auto msg = std::string{"Found graphics queue family on device "} + device.name;
                     Logger::info(msg.c_str());
                 #endif
-                this->flags = static_cast<IndexFlags>(static_cast<usize>(this->flags)|static_cast<usize>(IndexFlags::GraphicsQueueCompatible));
+                this->flags = static_cast<IndexFlags>(this->flags|IndexFlags::GraphicsQueueCompatible);
             }
 
             if (this->is_complete()) {

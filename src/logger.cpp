@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <mutex>
-#include "mcvulkan/color.h"
+#include "mcvk/color.h"
 
 
 namespace Logger
@@ -9,6 +9,7 @@ namespace Logger
 
     static std::mutex mtx;
 
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg)
     [[noreturn]] void fatal_error(const char *msg) noexcept
     {
         // Need a lock here because exit is not thread-safe, it uses a
@@ -40,4 +41,5 @@ namespace Logger
             fprintf(stderr, COLOR_YELLOW "WARNING: " COLOR_RESET "%s\n", msg);
         }
     #endif
+    // NOLINTEND(cppcoreguidelines-pro-type-vararg)
 }

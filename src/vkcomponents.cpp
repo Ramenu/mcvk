@@ -1,7 +1,7 @@
-#include "mcvulkan/vkcomponents.hpp"
+#include "mcvk/vkcomponents.hpp"
 #include <GLFW/glfw3.h>
 #include <vector>
-#include "mcvulkan/validationlayers.hpp"
+#include "mcvk/validationlayers.hpp"
 #include <cstring>
 
 #ifndef NDEBUG

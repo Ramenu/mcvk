@@ -1,7 +1,7 @@
-#include "mcvulkan/window.hpp"
+#include "mcvk/window.hpp"
 #ifndef NDEBUG
-    #include "mcvulkan/logger.hpp"
-    #include "mcvulkan/global.hpp"
+    #include "mcvk/logger.hpp"
+    #include "mcvk/global.hpp"
 #endif
 
 Window::Window(int wwidth, int wheight, const char *wname) noexcept :

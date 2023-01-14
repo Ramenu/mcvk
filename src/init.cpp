@@ -1,10 +1,10 @@
-#include "mcvulkan/window.hpp"
-#include "mcvulkan/logger.hpp"
-#include "mcvulkan/global.hpp"
-#include "mcvulkan/device.hpp"
-#include "mcvulkan/vkcomponents.hpp"
-#include "mcvulkan/validationlayers.hpp"
-#include "mcvulkan/swapchain.hpp"
+#include "mcvk/window.hpp"
+#include "mcvk/logger.hpp"
+#include "mcvk/global.hpp"
+#include "mcvk/device.hpp"
+#include "mcvk/vkcomponents.hpp"
+#include "mcvk/validationlayers.hpp"
+#include "mcvk/swapchain.hpp"
 #include <vulkan/vulkan.h>
 #include <cstring>
 #include <cstdlib>

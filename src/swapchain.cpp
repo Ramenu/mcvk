@@ -1,7 +1,7 @@
-#include "mcvulkan/swapchain.hpp"
-#include "mcvulkan/types.hpp"
-#include "mcvulkan/logger.hpp"
-#include "mcvulkan/global.hpp"
+#include "mcvk/swapchain.hpp"
+#include "mcvk/types.hpp"
+#include "mcvk/logger.hpp"
+#include "mcvk/global.hpp"
 #include <GLFW/glfw3.h>
 #include <limits>
 #include <algorithm>
@@ -138,7 +138,7 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
         u32 image_count {};
         vkGetSwapchainImagesKHR(device, swapchain, &image_count, nullptr);
 
-        if (image_count != 0) {
+        if (image_count != 0) [[likely]] {
             images.resize(image_count);
             vkGetSwapchainImagesKHR(device, swapchain, &image_count, images.data());
         }

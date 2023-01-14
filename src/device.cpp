@@ -1,16 +1,16 @@
- #include "mcvulkan/device.hpp"
- #include "mcvulkan/logger.hpp"
- #include "mcvulkan/global.hpp"
- #include "mcvulkan/swapchain.hpp"
+ #include "mcvk/device.hpp"
+ #include "mcvk/logger.hpp"
+ #include "mcvk/global.hpp"
+ #include "mcvk/swapchain.hpp"
  #include <vector>
  #include <string>
  #include <set>
  #include <array>
  #include <cstring>
- 
+
+
 namespace Device
 {
-    std::set<VkDevice> LogicalDevice::devices_in_use;
 
     static constexpr std::array REQUIRED_DEVICE_EXTENSIONS {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME // Not all GPUs can present images to a screen so this is required
