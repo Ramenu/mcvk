@@ -42,8 +42,8 @@ namespace Queue
             }
             auto constexpr belongs_to_one_family() const noexcept
             {
-                for (usize i {}; i < indices.size() - 1; ++i)
-                    if (indices.at(i) != indices.at(i+1))
+                for (usize i = 0; i < indices.size() - 1; ++i)
+                    if (indices[i] != indices[i+1])
                         return false;
                 return true;
             }
