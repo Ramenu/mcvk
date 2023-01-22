@@ -16,7 +16,7 @@ namespace Device
         VK_KHR_SWAPCHAIN_EXTENSION_NAME // Not all GPUs can present images to a screen so this is required
     };
 
-    static unsigned device_type_rating(VkPhysicalDeviceType type)
+    static unsigned device_type_rating(VkPhysicalDeviceType type) noexcept
     {
         switch (type)
         {
@@ -150,7 +150,7 @@ namespace Device
 
         // iterate through all the available devices in the
         // system and try to select the best one
-        for (auto device : devices) {
+        for (const auto &device : devices) {
             DeviceInfo info {};
             info.device.self = device;
             VkPhysicalDeviceMemoryProperties device_mem_properties {};
@@ -169,7 +169,7 @@ namespace Device
             const std::vector<VkMemoryHeap> memory_heaps {memory_heaps_ptr, memory_heaps_ptr + device_mem_properties.memoryHeapCount};
 
             // find VRAM size
-            for (auto heap : memory_heaps) {
+            for (const auto &heap : memory_heaps) {
                 if (heap.flags&VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
                     info.memory_heap = heap;
                     break;
@@ -193,10 +193,10 @@ namespace Device
 
             // device must be compatible in order to use it
             if (can_use_device) {
-                #ifndef NDEBUG
+                if constexpr (Global::IS_DEBUG_BUILD) {
                     const auto msg = std::string{"Device "} + info.properties.deviceName + " supports all required features.";
                     Logger::info(msg.c_str());
-                #endif
+                }
                 // if the previous device wasnt initialized yet, set the selected device to this device
                 if (previous_device_info.device.self == VK_NULL_HANDLE) {
                     appropriate_device_exists = true;
@@ -250,7 +250,7 @@ namespace Device
         const std::set<u32> unique_queue_families {selected_device_info.queue_family_indices.array().begin(), 
                                                    selected_device_info.queue_family_indices.array().end()};
 
-        for (auto queue_family : unique_queue_families) {
+        for (const auto &queue_family : unique_queue_families) {
             VkDeviceQueueCreateInfo queue_create_info {};
             queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             queue_create_info.queueFamilyIndex = queue_family;
@@ -292,8 +292,12 @@ namespace Device
     LogicalDevice::~LogicalDevice() noexcept
     {
         if (device != VK_NULL_HANDLE) {
-            if constexpr (Global::IS_DEBUG_BUILD)
+            if constexpr (Global::IS_DEBUG_BUILD) {
                 Logger::info("De-allocating logical device");
+                if (!this->device_is_in_use(device)) {
+                    Logger::fatal_error("Attempted to de-allocate logical device, but it is not being used. Fix this bug");
+                }
+            }
             vkDestroyDevice(device, nullptr); 
             devices_in_use.erase(device); // No longer using the device so erase it
             device = VK_NULL_HANDLE;

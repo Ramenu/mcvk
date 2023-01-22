@@ -54,7 +54,7 @@ static void game()
     init_vulkan(components, device, swapchain, window.self);
 
 
-    while (!glfwWindowShouldClose(window.self)) {
+    while (!glfwWindowShouldClose(window.self)) [[likely]] {
         glfwPollEvents();
     }
 
@@ -84,7 +84,7 @@ static void init_vulkan(const VkComponents &components,
         std::vector<VkLayerProperties> layer_properties (count);
         vkEnumerateInstanceLayerProperties(&count, layer_properties.data());
 
-        for (auto validation_layer : VALIDATION_LAYERS) {
+        for (const auto &validation_layer : VALIDATION_LAYERS) {
             bool found = false;
             for (const auto &properties : layer_properties) {
                 if (strcmp(validation_layer, properties.layerName) == 0)  {

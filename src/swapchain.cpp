@@ -23,8 +23,10 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
     VkSurfaceCapabilitiesKHR capabilities {};
 
     if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device.self, surface, &capabilities) != VK_SUCCESS) {
-        const auto msg = std::string{"Failed to retrieve surface capabilities for device "} + physical_device.name;
-        Logger::info(msg.c_str());
+        if constexpr (Global::IS_DEBUG_BUILD) {
+            const auto msg = std::string{"Failed to retrieve surface capabilities for device "} + physical_device.name;
+            Logger::info(msg.c_str());
+        }
         return;
     }
 
