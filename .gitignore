@@ -3,3 +3,4 @@
 /minecraft
 /*.log
 /buildinfo
+/CMakeLists.txt
