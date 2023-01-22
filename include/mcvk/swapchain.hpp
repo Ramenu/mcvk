@@ -1,5 +1,5 @@
-#ifndef MC_VULKAN_SWAPCHAIN_HPP
-#define MC_VULKAN_SWAPCHAIN_HPP
+#ifndef MCVK_SWAPCHAIN_HPP
+#define MCVK_SWAPCHAIN_HPP
 
 #include "mcvk/physicaldeviceinfo.hpp"
 #include "mcvk/types.hpp"
