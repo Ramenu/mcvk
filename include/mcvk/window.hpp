@@ -16,8 +16,8 @@ class Window
         ~Window() noexcept;
         static void create_surface(VkInstance instance, GLFWwindow &window, VkSurfaceKHR surface) noexcept;
         GLFWwindow *self {nullptr};
-        inline constexpr auto get_width() const { return this->width; }
-        inline constexpr auto get_height() const { return this->height; }
+        constexpr const auto &get_width() const noexcept { return this->width; }
+        constexpr const auto &get_height() const noexcept { return this->height; }
 };
 
 #endif // MCVK_WINDOW_HPP

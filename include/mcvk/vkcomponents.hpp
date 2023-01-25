@@ -22,10 +22,10 @@ class VkComponents
         #ifndef NDEBUG
             explicit VkComponents(bool use_messenger, GLFWwindow *window) noexcept;
         #endif
-        VkComponents() noexcept;
+        VkComponents() noexcept = default;
         ~VkComponents() noexcept;
-        constexpr auto get_instance() const { return instance; }
-        constexpr auto get_surface() const { return surface; }
+        constexpr const auto &get_instance() const { return instance; }
+        constexpr const auto &get_surface() const { return surface; }
         DELETE_NON_COPYABLE_NON_MOVABLE_DEFAULT(VkComponents)
 };
 

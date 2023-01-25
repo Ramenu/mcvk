@@ -23,6 +23,8 @@ class Swapchain
         VkSwapchainKHR swapchain {VK_NULL_HANDLE};
         VkDevice device {VK_NULL_HANDLE};
         std::vector<VkImage> images {};
+        VkFormat format {};
+        VkExtent2D extent {};
     public:
         DELETE_NON_COPYABLE_DEFAULT(Swapchain)
         constexpr Swapchain(Swapchain &&other) noexcept
@@ -30,18 +32,28 @@ class Swapchain
             swapchain = other.swapchain;
             device = other.device;
             compatible_flag = other.compatible_flag;
+            format = other.format;
+            extent = other.extent;
+
             other.swapchain = VK_NULL_HANDLE;
             other.device = VK_NULL_HANDLE;
             other.compatible_flag = CompatibleFlag::None;
+            other.format = VkFormat::VK_FORMAT_UNDEFINED;
+            other.extent = {0, 0};
         }
         constexpr auto &operator=(Swapchain &&other) noexcept
         {
             swapchain = other.swapchain;
             device = other.device;
             compatible_flag = other.compatible_flag;
+            format = other.format;
+            extent = other.extent;
+
             other.swapchain = VK_NULL_HANDLE;
             other.device = VK_NULL_HANDLE;
             other.compatible_flag = CompatibleFlag::None;
+            other.format = VkFormat::VK_FORMAT_UNDEFINED;
+            other.extent = {0, 0};
             return *this;
         }
         constexpr Swapchain() noexcept = default;
@@ -55,21 +67,27 @@ class Swapchain
         constexpr bool is_compatible() const noexcept { 
             return (compatible_flag & __SWAPCHAIN_FLAGS_SUM_) == __SWAPCHAIN_FLAGS_SUM_;
         }
+        constexpr const auto &operator[](usize index) const noexcept 
+        {
+            return images.at(index);
+        }
+        constexpr const auto &get_format() const noexcept { return format; }
+        constexpr const auto &get_extent() const noexcept { return extent; }
         ~Swapchain() noexcept
         {
             if (swapchain != VK_NULL_HANDLE) {
-                if (Device::LogicalDevice::device_is_in_use(device)) {
+                if (device != nullptr) {
                     if constexpr (Global::IS_DEBUG_BUILD)
-                        Logger::info("De-allocating swapchain");
+                        Logger::info("De-allocating 'VkSwapchainKHR'");
                     vkDestroySwapchainKHR(device, swapchain, nullptr);
                     swapchain = VK_NULL_HANDLE;
                 }
                 else
                     Logger::fatal_error("Swapchain has been allocated but the device it is linked to is not in use. \
                                          Please file a bug report if you see this error.");
-
             }
         }
+        constexpr usize size() const noexcept { return images.size(); }
 };
 
 #endif // MC_VULKAN_SWAPCHAIN_HPP

@@ -33,7 +33,7 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
     std::vector<VkSurfaceFormatKHR> formats;
     u32 format_count {};
     vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device.self, surface, &format_count, nullptr);
-
+    
     if (format_count != 0) {
         compatible_flag = static_cast<CompatibleFlag>(compatible_flag | CompatibleFlag::CompatibleWithSurfaceFormat);
         if constexpr (Global::IS_DEBUG_BUILD) {
@@ -81,11 +81,11 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
 
         const auto swap_surface_format = choose_swap_surface_format(formats);
         const auto swap_presentation_mode = choose_swap_presentation_mode(presentation_modes);
-        const auto swap_extent = choose_swap_extent(capabilities, window);
         const auto available_images = std::clamp(capabilities.minImageCount + 1, capabilities.minImageCount, capabilities.maxImageCount);
+        this->extent = choose_swap_extent(capabilities, window);
 
         if constexpr (Global::IS_DEBUG_BUILD) {
-            const auto msg = std::string{"Swapchain extent: "} + std::to_string(swap_extent.width) + "x" + std::to_string(swap_extent.height);
+            const auto msg = std::string{"Swapchain extent: "} + std::to_string(this->extent.width) + "x" + std::to_string(this->extent.height);
             Logger::info(msg.c_str());
         }
 
@@ -95,7 +95,7 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
         swapchain_create_info.minImageCount = available_images;
         swapchain_create_info.imageColorSpace = swap_surface_format.colorSpace;
         swapchain_create_info.imageFormat = swap_surface_format.format;
-        swapchain_create_info.imageExtent = swap_extent;
+        swapchain_create_info.imageExtent = this->extent;
         swapchain_create_info.imageArrayLayers = 1;
         swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // using swapchain for direct rendering, so use color attachment bit
 
@@ -150,6 +150,8 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
                 return;
             }
         #endif
+
+        this->format = swap_surface_format.format;
     }
 
 }

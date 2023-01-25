@@ -22,6 +22,11 @@ Window::~Window() noexcept
         glfwDestroyWindow(self);
         self = nullptr;
     }
+    #ifndef NDEBUG
+        else {
+            Logger::fatal_error("Failed to de-allocate 'GLFWwindow'. 'GLFWwindow' is null");
+        }
+    #endif
 }
 
 void Window::create_surface(VkInstance instance, GLFWwindow &window, VkSurfaceKHR surface) noexcept

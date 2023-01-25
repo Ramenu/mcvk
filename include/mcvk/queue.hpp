@@ -36,7 +36,7 @@ namespace Queue
             QueueFamilyIndices(Device::PhysicalDeviceInfo physical_device, VkSurfaceKHR surface) noexcept;
             QueueFamilyIndices() noexcept = default;
             bool constexpr is_complete() const noexcept { return (flags&__QUEUE_FLAG_INDICES_SUM_) == __QUEUE_FLAG_INDICES_SUM_; }
-            auto constexpr get(FamilyIndex family_index) const noexcept
+            auto constexpr const &get(FamilyIndex family_index) const noexcept
             {
                 return indices.at(static_cast<usize>(family_index));
             }

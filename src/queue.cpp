@@ -14,7 +14,7 @@ namespace Queue
 
         if (count == 0) {
             if constexpr (Global::IS_DEBUG_BUILD) {
-                const auto count_zero_msg = std::string{device.name} + " does not support any queue families";
+                const auto count_zero_msg = device.name + " does not support any queue families";
                 Logger::info(count_zero_msg.c_str());
             }
             return;

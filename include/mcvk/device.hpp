@@ -49,7 +49,7 @@ namespace Device
             DELETE_NON_COPYABLE_DEFAULT(LogicalDevice)
 
             ~LogicalDevice() noexcept; 
-            constexpr auto get() const { return device; }
+            constexpr const auto &get() const { return device; }
             static auto device_is_in_use(VkDevice device) noexcept
             {
                 return devices_in_use.find(device) != devices_in_use.end();

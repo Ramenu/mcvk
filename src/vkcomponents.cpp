@@ -68,7 +68,7 @@
             .apiVersion = VK_API_VERSION_1_0,
         };
 
-        static const std::vector<const char*> glfw_extensions = {[use_messenger](){
+        static const std::vector glfw_extensions = {[use_messenger](){
             uint32_t glfw_extension_count = 0;
             const char **glfw_extensions_ptr = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
             std::vector<const char *> extensions(glfw_extensions_ptr, glfw_extensions_ptr + glfw_extension_count);
@@ -106,11 +106,11 @@
         if constexpr (Global::IS_DEBUG_BUILD)
             Logger::info("Created vulkan instance successfully");
 
-        #ifndef NDEBUG
+        if constexpr (Global::IS_DEBUG_BUILD) {
             if (use_messenger)
                 if (CreateDebugUtilsMessengerEXT(instance, &DEBUG_CREATE_INFO, nullptr, &messenger) != VK_SUCCESS)
                     Logger::fatal_error("Failed to setup debug messenger with instance");
-        #endif
+        }
 
         // Create the window surface
         if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
@@ -125,8 +125,11 @@ VkComponents::~VkComponents() noexcept
 {
     // De-allocate debug messenger
     if constexpr (Global::IS_DEBUG_BUILD) {
-        if (messenger != VK_NULL_HANDLE && uses_debug_messenger) {
-            Logger::info("De-allocating debug messenger");
+        if (messenger == VK_NULL_HANDLE && uses_debug_messenger)
+            Logger::fatal_error("Failed to de-allocate 'VkDebugUtilsMessengerEXT'. 'VkDebugUtilsMessengerEXT' is null");
+
+        if (uses_debug_messenger) {
+            Logger::info("De-allocating 'VkDebugUtilsMessengerEXT'");
             auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
             if (func != nullptr) {
                 func(instance, messenger, nullptr);
@@ -138,15 +141,21 @@ VkComponents::~VkComponents() noexcept
     }
 
     if (surface != VK_NULL_HANDLE) {
-        if constexpr (Global::IS_DEBUG_BUILD)
-            Logger::info("De-allocating VkSurfaceKHR");
+        if constexpr (Global::IS_DEBUG_BUILD) {
+            if (surface == VK_NULL_HANDLE)
+                Logger::fatal_error("Failed to de-allocate 'VkSurfaceKHR'. 'VkSurfaceKHR' is null");
+            Logger::info("De-allocating 'VkSurfaceKHR'");
+        }
         vkDestroySurfaceKHR(instance, surface, nullptr);
         surface = VK_NULL_HANDLE;
     }
 
     if (instance != VK_NULL_HANDLE) {
-        if constexpr (Global::IS_DEBUG_BUILD)
+        if constexpr (Global::IS_DEBUG_BUILD) {
+            if (instance == VK_NULL_HANDLE)
+                Logger::fatal_error("Failed to de-allocate 'VkInstance'. 'VkInstance' is null");
             Logger::info("De-allocating VkInstance");
+        }
         vkDestroyInstance(instance, nullptr);
         instance = VK_NULL_HANDLE;
     }

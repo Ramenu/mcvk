@@ -28,7 +28,7 @@ namespace Device
         }
     }
 
-    static bool received_vram_retrieval_error(const DeviceInfo &info)
+    static bool received_vram_retrieval_error(const DeviceInfo &info) noexcept
     {
         if (!(info.memory_heap.flags&VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)) {
             const auto msg = std::string{"Failed to retrieve "} + info.properties.deviceName + " VRAM size";
@@ -39,7 +39,7 @@ namespace Device
     }
 
     // keep in mind this comparsion is quite primitive, but it should at least be good enough
-    static Global::Compare compare_device_specs(const DeviceInfo &one, const DeviceInfo &two)
+    static Global::Compare compare_device_specs(const DeviceInfo &one, const DeviceInfo &two) noexcept
     {
         // in the future can also check for sparse binding support, dynamic array indexing, and tesselation support,
         u32 score_one {}, score_two {};
@@ -90,7 +90,8 @@ namespace Device
         std::vector<VkExtensionProperties> available_device_extensions (extension_count);
         vkEnumerateDeviceExtensionProperties(info.device.self, nullptr, &extension_count, available_device_extensions.data());
 
-        std::set<std::string> required_extensions {REQUIRED_DEVICE_EXTENSIONS.begin(), REQUIRED_DEVICE_EXTENSIONS.end()};
+        std::set<std::string> required_extensions {REQUIRED_DEVICE_EXTENSIONS.begin(), 
+                                                   REQUIRED_DEVICE_EXTENSIONS.end()};
 
         for (const auto &extension : available_device_extensions) {
             if constexpr (Global::IS_DEBUG_BUILD) {
@@ -160,10 +161,10 @@ namespace Device
             vkGetPhysicalDeviceFeatures(device, &info.features);
 
             info.device.name = info.properties.deviceName;
-            #ifndef NDEBUG
+            if constexpr (Global::IS_DEBUG_BUILD) {
                 const auto check_dev_msg = std::string{"Checking device: "} + info.device.name;
                 Logger::info(check_dev_msg.c_str());
-            #endif
+            }
 
             const auto memory_heaps_ptr {device_mem_properties.memoryHeaps};
             const std::vector<VkMemoryHeap> memory_heaps {memory_heaps_ptr, memory_heaps_ptr + device_mem_properties.memoryHeapCount};
@@ -231,10 +232,10 @@ namespace Device
         if (!appropriate_device_exists)
             Logger::fatal_error("Could not find a suitable GPU to run the game");
 
-        #ifndef NDEBUG
+        if constexpr (Global::IS_DEBUG_BUILD) {
             const auto msg = std::string{"Selected physical device: "} + selected_device_info.properties.deviceName;
             Logger::info(msg.c_str());
-        #endif
+        }
 
         return selected_device_info;
     }
@@ -293,7 +294,7 @@ namespace Device
     {
         if (device != VK_NULL_HANDLE) {
             if constexpr (Global::IS_DEBUG_BUILD) {
-                Logger::info("De-allocating logical device");
+                Logger::info("De-allocating 'VkDevice'");
                 if (!this->device_is_in_use(device)) {
                     Logger::fatal_error("Attempted to de-allocate logical device, but it is not being used. Fix this bug");
                 }
