@@ -152,6 +152,34 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
         #endif
 
         this->format = swap_surface_format.format;
+
+        image_views.resize(images.size());
+        for (usize i = 0; i < images.size(); ++i) {
+            VkImageViewCreateInfo info {};
+            info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            info.image = images[i];
+            info.format = this->format;
+
+            // specify how data should be interpreted (in this case, as a 2D image)
+            info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+            // specify color channels (using default)
+            info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+            // subresourceRange describes the properties of the image and which part of the image
+            // should be accessed
+            info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            info.subresourceRange.baseMipLevel = 0;
+            info.subresourceRange.levelCount = 1;
+            info.subresourceRange.baseArrayLayer = 0;
+            info.subresourceRange.layerCount = 1;
+
+            if (vkCreateImageView(device, &info, nullptr, &image_views[i]) != VK_SUCCESS)
+                Logger::fatal_error(std::string{"Failed to create image view at index " + std::to_string(i)}.c_str());
+        }
     }
 
 }
@@ -219,4 +247,25 @@ inline static VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR &capa
         .width = std::clamp(static_cast<u32>(width), capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
         .height = std::clamp(static_cast<u32>(height), capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
     };
+}
+
+Swapchain::~Swapchain() noexcept
+{
+    for (auto &image : image_views) {
+        if (image != VK_NULL_HANDLE) {
+            vkDestroyImageView(device, image, nullptr);
+            image = VK_NULL_HANDLE;
+        }
+    }
+    if constexpr(Global::IS_DEBUG_BUILD)
+        if (image_views.size() > 0)
+            Logger::info("De-allocated all images in swapchain");
+    
+    if (swapchain != VK_NULL_HANDLE) {
+        if constexpr (Global::IS_DEBUG_BUILD) {
+            Logger::info("De-allocating 'VkSwapchainKHR'");
+        }
+        vkDestroySwapchainKHR(device, swapchain, nullptr);
+        swapchain = VK_NULL_HANDLE;
+    }
 }
