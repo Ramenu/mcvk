@@ -124,7 +124,7 @@
 VkComponents::~VkComponents() noexcept
 {
     // De-allocate debug messenger
-    if constexpr (Global::IS_DEBUG_BUILD) {
+    #ifndef NDEBUG
         if (messenger == VK_NULL_HANDLE && uses_debug_messenger)
             Logger::fatal_error("Failed to de-allocate 'VkDebugUtilsMessengerEXT'. 'VkDebugUtilsMessengerEXT' is null");
 
@@ -138,7 +138,7 @@ VkComponents::~VkComponents() noexcept
             else
                 Logger::error("Failed to load 'vkDestroyDebugUtilsMessengerEXT' address");
         }
-    }
+    #endif
 
     if (surface != VK_NULL_HANDLE) {
         if constexpr (Global::IS_DEBUG_BUILD) {
@@ -154,7 +154,7 @@ VkComponents::~VkComponents() noexcept
         if constexpr (Global::IS_DEBUG_BUILD) {
             if (instance == VK_NULL_HANDLE)
                 Logger::fatal_error("Failed to de-allocate 'VkInstance'. 'VkInstance' is null");
-            Logger::info("De-allocating VkInstance");
+            Logger::info("De-allocating 'VkInstance'");
         }
         vkDestroyInstance(instance, nullptr);
         instance = VK_NULL_HANDLE;

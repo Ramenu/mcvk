@@ -2,6 +2,7 @@
 #ifndef NDEBUG
     #include "mcvk/logger.hpp"
     #include "mcvk/global.hpp"
+    #include <cassert>
 #endif
 
 Window::Window(int wwidth, int wheight, const char *wname) noexcept :
@@ -16,17 +17,12 @@ Window::Window(int wwidth, int wheight, const char *wname) noexcept :
 
 Window::~Window() noexcept
 {
-    if (self != nullptr) {
-        if constexpr (Global::IS_DEBUG_BUILD)
-            Logger::info("De-allocating window");
-        glfwDestroyWindow(self);
-        self = nullptr;
-    }
     #ifndef NDEBUG
-        else {
-            Logger::fatal_error("Failed to de-allocate 'GLFWwindow'. 'GLFWwindow' is null");
-        }
+        Logger::info("De-allocating window");
+        assert(self != nullptr);
     #endif
+    glfwDestroyWindow(self);
+    self = nullptr;
 }
 
 void Window::create_surface(VkInstance instance, GLFWwindow &window, VkSurfaceKHR surface) noexcept
