@@ -1,8 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <mutex>
-#include "mcvk/color.h"
-
+#include "mcvk/utils/color.h"
 
 namespace Logger
 {

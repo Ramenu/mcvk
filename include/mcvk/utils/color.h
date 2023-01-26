@@ -1,6 +1,5 @@
-#ifndef MCVULKAN_COLOR_H
-#define MCVULKAN_COLOR_H
-
+#ifndef MCVK_COLOR_H
+#define MCVK_COLOR_H
 
 #define COLOR_RESET   "\033[0m"
 #define COLOR_BLACK   "\033[30m"      /* Black */
@@ -20,4 +19,4 @@
 #define COLOR_BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define COLOR_BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
-#endif // MCVULKAN_COLOR_H
+#endif // MCVK_COLOR_H
