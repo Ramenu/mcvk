@@ -8,6 +8,7 @@
 #include "mcvk/global.hpp"  // for IS_DEBUG_BUILD
 #include "mcvk/logger.hpp"  // for fatal_error
 #include "mcvk/types.hpp"
+#include "mcvk/device.hpp"
 
 
 static constexpr std::array DYNAMIC_STATES {
@@ -15,10 +16,14 @@ static constexpr std::array DYNAMIC_STATES {
     VK_DYNAMIC_STATE_SCISSOR
 };
 
-static VkShaderModule create_shader_module(const std::string &code, VkDevice device) noexcept;
+#ifndef NDEBUG
+    static VkShaderModule create_shader_module(const std::string &, const Device::LogicalDevice &, const char *) noexcept;
+#else
+    static VkShaderModule create_shader_module(const std::string &, const Device::LogicalDevice &, VkDevice) noexcept;
+#endif
 
-Pipeline::Pipeline(VkDevice device, const VkFormat swapchain_image_format) noexcept :
-    device_handle {device}
+Pipeline::Pipeline(const Device::LogicalDevice &device, const VkFormat swapchain_image_format) noexcept :
+    device_handle {device.get()}
 {
     if constexpr (Global::IS_DEBUG_BUILD)
         assert(device_handle != VK_NULL_HANDLE);
@@ -120,6 +125,11 @@ Pipeline::Pipeline(VkDevice device, const VkFormat swapchain_image_format) noexc
 
     if (vkCreatePipelineLayout(device_handle, &pipeline_layout_info, nullptr, &pipeline_layout) != VK_SUCCESS)
         Logger::fatal_error("Failed to create pipeline layout");    // open files
+    
+    #ifndef NDEBUG
+        const auto msg = "Successfully created pipeline layout (from device handle: " + device.device_name() + ")";
+        Logger::info(msg.c_str());
+    #endif
 
     this->init_renderpass(swapchain_image_format);
 
@@ -152,8 +162,13 @@ Pipeline::Pipeline(VkDevice device, const VkFormat swapchain_image_format) noexc
     const auto fragment_shader_code = fragment_shader_stream.str();
 
     // create shader modules and setup stages
-    const auto vertex_shader_module = create_shader_module(vertex_shader_code, device);
-    const auto fragment_shader_module = create_shader_module(fragment_shader_code, device);
+    #ifndef NDEBUG
+        const auto vertex_shader_module = create_shader_module(vertex_shader_code, device, vertex_shader_path);
+        const auto fragment_shader_module = create_shader_module(fragment_shader_code, device, fragment_shader_path);
+    #else
+        const auto vertex_shader_module = create_shader_module(vertex_shader_code, device);
+        const auto fragment_shader_module = create_shader_module(fragment_shader_code, device);
+    #endif
 
     VkPipelineShaderStageCreateInfo vertex_shader_stage_info {}, fragment_shader_state_info {};
     vertex_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -195,12 +210,17 @@ Pipeline::Pipeline(VkDevice device, const VkFormat swapchain_image_format) noexc
     if (vkCreateGraphicsPipelines(device_handle, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline) != VK_SUCCESS)
         Logger::fatal_error("Failed to create graphics pipeline");
 
-    vkDestroyShaderModule(device, vertex_shader_module, nullptr);
-    vkDestroyShaderModule(device, fragment_shader_module, nullptr);
+    vkDestroyShaderModule(device.get(), vertex_shader_module, nullptr);
+    vkDestroyShaderModule(device.get(), fragment_shader_module, nullptr);
 
 }
 
-static VkShaderModule create_shader_module(const std::string &code, VkDevice device) noexcept
+static VkShaderModule create_shader_module(const std::string &code, 
+                                           const Device::LogicalDevice &device,
+                                           #ifndef NDEBUG
+                                             const char *shader_file_path
+                                           #endif
+                                           ) noexcept
 {
     VkShaderModuleCreateInfo info {};
     info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -208,8 +228,19 @@ static VkShaderModule create_shader_module(const std::string &code, VkDevice dev
     info.pCode = reinterpret_cast<const u32*>(code.data());
 
     VkShaderModule shader_module {};
-    if (vkCreateShaderModule(device, &info, nullptr, &shader_module) != VK_SUCCESS)
+    if (vkCreateShaderModule(device.get(), &info, nullptr, &shader_module) != VK_SUCCESS)
         Logger::fatal_error("Failed to create shader module");
+
+    #ifndef NDEBUG
+        const auto msg = std::string{"Successfully created shader module from '"} + 
+                        shader_file_path + 
+                        "' from device handle: '" + 
+                        device.device_name() +
+                        "' (code size: " + 
+                        std::to_string(code.size()) + 
+                        " bytes)";
+        Logger::info(msg.c_str());
+    #endif
 
     return shader_module;
 }
@@ -277,4 +308,8 @@ void Pipeline::init_renderpass(const VkFormat swapchain_image_format) noexcept
 
     if (vkCreateRenderPass(device_handle, &renderpass_info, nullptr, &renderpass) != VK_SUCCESS)
         Logger::fatal_error("Failed to initialize renderpass");
+
+    #ifndef NDEBUG
+        Logger::info("Successfully initialized renderpass");
+    #endif
 }
