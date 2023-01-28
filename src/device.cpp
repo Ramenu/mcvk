@@ -242,12 +242,17 @@ namespace Device
         return selected_device_info;
     }
 
-    LogicalDevice::LogicalDevice(const DeviceInfo &selected_device_info) noexcept
+    LogicalDevice::LogicalDevice(const DeviceInfo &selected_device_info) noexcept 
+    #ifndef NDEBUG
+    : name {selected_device_info.device.name}
+    #endif
     {
         constexpr float QUEUE_PRIORITY {1.0f};
 
-        if (!selected_device_info.queue_family_indices.is_complete())
-            Logger::fatal_error("Selected device should have all required queue families. If you're seeing this error, report this as a bug.");
+        #ifndef NDEBUG
+            if (!selected_device_info.queue_family_indices.is_complete())
+                Logger::fatal_error("Selected device should have all required queue families. If you're seeing this error, report this as a bug.");
+        #endif
 
         std::vector<VkDeviceQueueCreateInfo> queue_create_infos {};
         const std::set<u32> unique_queue_families {selected_device_info.queue_family_indices.array().begin(), 

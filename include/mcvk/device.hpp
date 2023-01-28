@@ -2,8 +2,11 @@
 #define MCVK_DEVICE_HPP
 
 #include <GLFW/glfw3.h>
-#include <set>
 #include <vulkan/vulkan_core.h>
+#include <set>
+#include <string>
+#include <utility>
+
 #include "mcvk/global.hpp"
 #include "mcvk/physicaldeviceinfo.hpp"
 #include "mcvk/queue.hpp"
@@ -28,6 +31,9 @@ namespace Device
             VkDevice device {VK_NULL_HANDLE};
             VkQueue graphics_queue {};
             VkQueue presentation_queue {};
+            #ifndef NDEBUG
+                std::string name {};
+            #endif
         public:
             constexpr LogicalDevice() noexcept = default;
             explicit LogicalDevice(const DeviceInfo &selected_device_info) noexcept;
@@ -37,6 +43,9 @@ namespace Device
                 this->graphics_queue = other.graphics_queue;
 
                 other.device = VK_NULL_HANDLE;
+                #ifndef NDEBUG
+                    this->name = std::move(other.name);
+                #endif
                 return *this;
             }
             constexpr explicit LogicalDevice(LogicalDevice &&other) noexcept
@@ -45,11 +54,17 @@ namespace Device
                 this->graphics_queue = other.graphics_queue;
 
                 other.device = VK_NULL_HANDLE;
+                #ifndef NDEBUG
+                    this->name = std::move(other.name);
+                #endif
             }
             DELETE_NON_COPYABLE_DEFAULT(LogicalDevice)
 
             ~LogicalDevice() noexcept; 
-            constexpr const auto &get() const { return device; }
+            constexpr const auto &get() const noexcept { return device; }
+            #ifndef NDEBUG
+                constexpr const auto &device_name() const noexcept { return name; }
+            #endif
             static auto device_is_in_use(VkDevice device) noexcept
             {
                 return devices_in_use.find(device) != devices_in_use.end();
