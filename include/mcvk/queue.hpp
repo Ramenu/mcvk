@@ -9,7 +9,7 @@ namespace Device { struct PhysicalDeviceInfo; }
 
 namespace Queue
 {
-    enum FamilyIndex
+    enum FamilyIndex : u32
     {
         GraphicsQueueIndex,
         PresentationQueueIndex
