@@ -1,6 +1,10 @@
 #include "mcvk/queue.hpp"
-#include <vector>
-#include "mcvk/logger.hpp"
+#include <string>                       // for operator+, allocator, string
+#include <vector>                       // for vector
+#include "mcvk/global.hpp"              // for IS_DEBUG_BUILD
+#include "mcvk/logger.hpp"              // for info
+#include "mcvk/physicaldeviceinfo.hpp"  // for PhysicalDeviceInfo
+#include "mcvk/types.hpp"               // for u32
 
 namespace Queue
 {

@@ -1,7 +1,7 @@
 #ifndef MCVK_SHADER_HPP
 #define MCVK_SHADER_HPP
 
-#include "vulkan/vulkan.h"
+#include "vulkan/vulkan_core.h"
 
 class Shader
 {
@@ -9,6 +9,7 @@ class Shader
         Shader(const char *vertex_shader_path, 
                const char *fragment_shader_path, 
                VkDevice device) noexcept;
+        Shader() noexcept = default;
 
 };
 

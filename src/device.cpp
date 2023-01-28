@@ -2,11 +2,13 @@
  #include "mcvk/logger.hpp"
  #include "mcvk/global.hpp"
  #include "mcvk/swapchain.hpp"
+ #include "mcvk/types.hpp"
+ #include "mcvk/vkcomponents.hpp"
  #include <vector>
  #include <string>
  #include <set>
  #include <array>
- #include <cstring>
+ #include <utility>
 
 
 namespace Device

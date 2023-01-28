@@ -1,8 +1,6 @@
 #ifndef MCVK_LOGGER_HPP
 #define MCVK_LOGGER_HPP
 
-#include "types.hpp"
-
 namespace Logger
 {
     // for unrecoverable errors

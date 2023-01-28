@@ -2,9 +2,9 @@
 #define MCVK_WINDOW_HPP
 
 #define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
-#include "global.hpp"
+#include <GLFW/glfw3.h>          // for GLFWwindow
+#include <vulkan/vulkan_core.h>  // for VkInstance, VkSurfaceKHR
+#include "global.hpp"            // for DELETE_NON_COPYABLE_NON_MOVABLE_DEFAULT
 
 class Window
 {

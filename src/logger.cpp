@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <mutex>
 #include "mcvk/utils/color.h"
+#include "mcvk/logger.hpp"
 
 namespace Logger
 {

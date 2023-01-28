@@ -1,8 +1,13 @@
+#define GLFW_INCLUDE_VULKAN
 #include "mcvk/vkcomponents.hpp"
-#include <GLFW/glfw3.h>
-#include <vector>
-#include "mcvk/validationlayers.hpp"
-#include <cstring>
+#include <GLFW/glfw3.h>               // for glfwGetRequiredInstanceExtensions
+#include <stdint.h>                   // for uint32_t
+#include <vulkan/vk_platform.h>       // for VKAPI_ATTR, VKAPI_CALL
+#include <array>                      // for array
+#include <vector>                     // for vector
+#include "mcvk/logger.hpp"            // for fatal_error, info, error, diagn...
+#include "mcvk/types.hpp"             // for u32
+#include "mcvk/validationlayers.hpp"  // for VALIDATION_LAYERS
 
 #ifndef NDEBUG
 

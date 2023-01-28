@@ -8,7 +8,7 @@ T &operator=(T &&) = delete; \
 T(T &&) = delete;
 
 #define DELETE_NON_COPYABLE_DEFAULT(T) \
-T &operator=(const T &) = delete; \
+T &operator=(const T &) & = delete; \
 T(const T &) = delete;
 
 #define DELETE_NON_COPYABLE_NON_MOVABLE_DEFAULT(T) \

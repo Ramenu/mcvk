@@ -1,15 +1,16 @@
 #ifndef MCVK_SWAPCHAIN_HPP
 #define MCVK_SWAPCHAIN_HPP
 
-#include "mcvk/physicaldeviceinfo.hpp"
-#include "mcvk/types.hpp"
-#include "mcvk/queue.hpp"
-#include "mcvk/global.hpp"
-#include "mcvk/logger.hpp"
-#include <GLFW/glfw3.h>
-#include <vector>
-#include "mcvk/device.hpp"
-#include <cassert>
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>          // for GLFWwindow
+#include <vulkan/vulkan_core.h>  // for VkImageView, VkImageView_T, VK_NULL_...
+#include <cassert>               // for assert
+#include <utility>               // for move
+#include <vector>                // for vector
+#include "mcvk/global.hpp"       // for FLAG_SUM, DELETE_NON_COPYABLE_DEFAULT
+#include "mcvk/types.hpp"        // for usize, u8
+namespace Device { struct PhysicalDeviceInfo; }
+namespace Queue { class QueueFamilyIndices; }
 
 class Swapchain
 {

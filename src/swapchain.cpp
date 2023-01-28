@@ -1,12 +1,17 @@
 #include "mcvk/swapchain.hpp"
-#include "mcvk/types.hpp"
-#include "mcvk/logger.hpp"
-#include "mcvk/global.hpp"
-#include <GLFW/glfw3.h>
-#include <limits>
-#include <algorithm>
-#include <vector>
-#include <string>
+#include <GLFW/glfw3.h>                 // for GLFWwindow, glfwGetFramebuffe...
+#include <algorithm>                    // for clamp, find_if
+#include <array>                        // for array
+#include <iterator>                     // for end
+#include <limits>                       // for numeric_limits
+#include <string>                       // for operator+, char_traits, to_st...
+#include <vector>                       // for vector, allocator
+#include "mcvk/device.hpp"              // for LogicalDevice
+#include "mcvk/global.hpp"              // for IS_DEBUG_BUILD
+#include "mcvk/logger.hpp"              // for info, error, fatal_error
+#include "mcvk/physicaldeviceinfo.hpp"  // for PhysicalDeviceInfo
+#include "mcvk/queue.hpp"               // for QueueFamilyIndices, FamilyIndex
+#include "mcvk/types.hpp"               // for u32, usize
 
 
 inline static VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) noexcept;

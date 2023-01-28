@@ -1,14 +1,16 @@
-#include "mcvk/window.hpp"
-#include "mcvk/logger.hpp"
-#include "mcvk/global.hpp"
-#include "mcvk/device.hpp"
-#include "mcvk/vkcomponents.hpp"
-#include "mcvk/validationlayers.hpp"
-#include "mcvk/swapchain.hpp"
-#include <vulkan/vulkan.h>
-#include <cstring>
-#include <cstdlib>
-#include <vector>
+#include <GLFW/glfw3.h>
+#include <vulkan/vulkan_core.h>       // for VkLayerProperties, vkEnumerateI...
+#include <array>                      // for array
+#include <cstring>                    // for strcmp
+#include <vector>                     // for vector
+#include "mcvk/device.hpp"            // for select_physical_device, Logical...
+#include "mcvk/logger.hpp"            // for fatal_error
+#include "mcvk/swapchain.hpp"         // for Swapchain
+#include "mcvk/types.hpp"             // for u32
+#include "mcvk/validationlayers.hpp"  // for VALIDATION_LAYERS
+#include "mcvk/vkcomponents.hpp"      // for VkComponents
+#include "mcvk/window.hpp"            // for Window, glfwInit, glfwPollEvents
+#include "mcvk/pipeline.hpp"          // for Pipeline
 
 
 static void game();
@@ -52,6 +54,9 @@ static void game()
 
     // Initialize base vulkan instance, setting up physical/logical devices, debug messengers, swapchain, etc.
     init_vulkan(components, device, swapchain, window.self);
+
+    // Initialize the graphics pipeline
+    Pipeline pipeline {device.get(), swapchain.get_format()};
 
     while (!glfwWindowShouldClose(window.self)) [[likely]] 
     {

@@ -1,14 +1,14 @@
 #ifndef MCVK_DEVICE_HPP
 #define MCVK_DEVICE_HPP
 
-#include <vulkan/vulkan.h>
-#include "mcvk/queue.hpp"
-#include "mcvk/vkcomponents.hpp"
 #include <GLFW/glfw3.h>
-#ifndef NDEBUG
-    #include <string>
-#endif
 #include <set>
+#include <vulkan/vulkan_core.h>
+#include "mcvk/global.hpp"
+#include "mcvk/physicaldeviceinfo.hpp"
+#include "mcvk/queue.hpp"
+
+class VkComponents;
 
 namespace Device
 {

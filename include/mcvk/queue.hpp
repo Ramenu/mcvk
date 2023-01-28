@@ -1,11 +1,11 @@
 #ifndef MCVK_QUEUE_HPP
 #define MCVK_QUEUE_HPP
 
+#include <vulkan/vulkan_core.h>
 #include <array>
-#include "mcvk/types.hpp"
-#include "mcvk/physicaldeviceinfo.hpp"
-#include "mcvk/global.hpp"
-
+#include "global.hpp"
+#include "types.hpp"
+namespace Device { struct PhysicalDeviceInfo; }
 
 namespace Queue
 {

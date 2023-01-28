@@ -1,12 +1,9 @@
 #ifndef MCVK_VKCOMPONENTS_HPP 
 #define MCVK_VKCOMPONENTS_HPP
 
-#include "mcvk/global.hpp"
-#include <vulkan/vulkan.h>
-#ifndef NDEBUG
-    #include "mcvk/logger.hpp"
-#endif
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h>          // for GLFWwindow
+#include <vulkan/vulkan_core.h>  // for VK_NULL_HANDLE, VkDebugUtilsMessenge...
+#include "mcvk/global.hpp"       // for DELETE_NON_COPYABLE_NON_MOVABLE_DEFAULT
 
 class VkComponents
 {
