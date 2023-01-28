@@ -6,11 +6,12 @@
 #include <vulkan/vulkan_core.h>  // for VkImageView, VkImageView_T, VK_NULL_...
 #include <cassert>               // for assert
 #include <utility>               // for move
-#include <vector>                // for vector
+#include <vector>
 #include "mcvk/global.hpp"       // for FLAG_SUM, DELETE_NON_COPYABLE_DEFAULT
 #include "mcvk/types.hpp"        // for usize, u8
 namespace Device { struct PhysicalDeviceInfo; }
 namespace Queue { class QueueFamilyIndices; }
+
 
 class Swapchain
 {
@@ -24,11 +25,14 @@ class Swapchain
         static constexpr usize __SWAPCHAIN_FLAGS_SUM_ = Global::FLAG_SUM(__LINE__ - __SWAPCHAIN_INDICES_CURRENT_LINE_ - 4);
         VkSwapchainKHR swapchain {VK_NULL_HANDLE};
         VkDevice device {VK_NULL_HANDLE};
-        std::vector<VkImage> images {};
+        std::vector<VkImage> images {VK_NULL_HANDLE};
         std::vector<VkImageView> image_views {VK_NULL_HANDLE};
+        std::vector<VkFramebuffer> framebuffers {VK_NULL_HANDLE};
         VkFormat format {};
         VkExtent2D extent {};
+        void initialize_image_views() noexcept;
     public:
+        void initialize_framebuffers(VkRenderPass renderpass) noexcept;
         DELETE_NON_COPYABLE_DEFAULT(Swapchain)
         constexpr Swapchain(Swapchain &&other) noexcept
         {
@@ -37,7 +41,9 @@ class Swapchain
             compatible_flag = other.compatible_flag;
             format = other.format;
             extent = other.extent;
+            images = std::move(other.images);
             image_views = std::move(other.image_views);
+            framebuffers = std::move(other.framebuffers);
 
             other.swapchain = VK_NULL_HANDLE;
             other.device = VK_NULL_HANDLE;
@@ -52,7 +58,9 @@ class Swapchain
             compatible_flag = other.compatible_flag;
             format = other.format;
             extent = other.extent;
+            images = std::move(other.images);
             image_views = std::move(other.image_views);
+            framebuffers = std::move(other.framebuffers);
 
             other.swapchain = VK_NULL_HANDLE;
             other.device = VK_NULL_HANDLE;
@@ -64,6 +72,9 @@ class Swapchain
         }
         constexpr Swapchain() noexcept = default;
 
+        /**
+         * NOTE: This does not initialize the framebuffers!
+         */
         Swapchain(Device::PhysicalDeviceInfo physical_device, 
                   VkSurfaceKHR surface, 
                   GLFWwindow *window,
@@ -73,9 +84,11 @@ class Swapchain
         constexpr bool is_compatible() const noexcept { 
             return (compatible_flag & __SWAPCHAIN_FLAGS_SUM_) == __SWAPCHAIN_FLAGS_SUM_;
         }
-        constexpr const auto &operator[](usize index) const noexcept 
-        {
-            return images.at(index);
+        constexpr const auto &framebuffer_at(usize index) const noexcept 
+        { 
+            if constexpr (Global::IS_DEBUG_BUILD)
+                assert(index < framebuffers.size());
+            return framebuffers[index]; 
         }
         constexpr const auto &get_format() const noexcept { return format; }
         constexpr const auto &get_extent() const noexcept { return extent; }

@@ -5,7 +5,6 @@
 #include <iterator>                     // for end
 #include <limits>                       // for numeric_limits
 #include <string>                       // for operator+, char_traits, to_st...
-#include <vector>                       // for vector, allocator
 #include "mcvk/device.hpp"              // for LogicalDevice
 #include "mcvk/global.hpp"              // for IS_DEBUG_BUILD
 #include "mcvk/logger.hpp"              // for info, error, fatal_error
@@ -158,33 +157,10 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
 
         this->format = swap_surface_format.format;
 
-        image_views.resize(images.size());
-        for (usize i = 0; i < images.size(); ++i) {
-            VkImageViewCreateInfo info {};
-            info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            info.image = images[i];
-            info.format = this->format;
+        this->initialize_image_views();
 
-            // specify how data should be interpreted (in this case, as a 2D image)
-            info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-
-            // specify color channels (using default)
-            info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-            // subresourceRange describes the properties of the image and which part of the image
-            // should be accessed
-            info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            info.subresourceRange.baseMipLevel = 0;
-            info.subresourceRange.levelCount = 1;
-            info.subresourceRange.baseArrayLayer = 0;
-            info.subresourceRange.layerCount = 1;
-
-            if (vkCreateImageView(device, &info, nullptr, &image_views[i]) != VK_SUCCESS)
-                Logger::fatal_error(std::string{"Failed to create image view at index " + std::to_string(i)}.c_str());
-        }
+        // We don't initialize the framebuffers here, since the graphics pipeline hasn't been
+        // initialized yet. To do that, call the initialize_framebuffers() method.
     }
 
 }
@@ -254,17 +230,107 @@ inline static VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR &capa
     };
 }
 
+void Swapchain::initialize_image_views() noexcept
+{
+    if constexpr (Global::IS_DEBUG_BUILD) {
+        static bool initialized = false;
+        if (initialized)
+            Logger::fatal_error("Swapchain image views already initialized");
+        initialized = true;
+    }
+
+    image_views.resize(images.size());
+    for (usize i = 0; i < images.size(); ++i) {
+        VkImageViewCreateInfo info {};
+        info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        info.image = images[i];
+        info.format = this->format;
+
+        // specify how data should be interpreted (in this case, as a 2D image)
+        info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+
+        // specify color channels (using default)
+        info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+        // subresourceRange describes the properties of the image and which part of the image
+        // should be accessed
+        info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        info.subresourceRange.baseMipLevel = 0;
+        info.subresourceRange.levelCount = 1;
+        info.subresourceRange.baseArrayLayer = 0;
+        info.subresourceRange.layerCount = 1;
+
+        if (vkCreateImageView(device, &info, nullptr, &image_views[i]) != VK_SUCCESS)
+            Logger::fatal_error(std::string{"Failed to create image view at index " + std::to_string(i)}.c_str());
+    }
+    #ifndef NDEBUG
+        const auto msg = std::string{"Created " + std::to_string(image_views.size()) + " image views"};
+        Logger::info(msg.c_str());
+    #endif
+}
+
+void Swapchain::initialize_framebuffers(const VkRenderPass renderpass) noexcept
+{
+    if constexpr (Global::IS_DEBUG_BUILD) {
+        static bool initialized = false;
+        if (initialized)
+            Logger::fatal_error("Swapchain framebuffers already initialized");
+        initialized = true;
+    }
+
+    framebuffers.resize(image_views.size());
+    for (usize i = 0; i < image_views.size(); ++i) {
+
+        VkFramebufferCreateInfo info {};
+        info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        info.renderPass = renderpass;
+        info.attachmentCount = 1;
+        info.pAttachments = &image_views[i];
+        info.width = extent.width;
+        info.height = extent.height;
+        info.layers = 1;
+
+        if (vkCreateFramebuffer(device, &info, nullptr, &framebuffers[i]) != VK_SUCCESS)
+            Logger::fatal_error(std::string{"Failed to create framebuffer at index " + std::to_string(i)}.c_str());
+    }
+    #ifndef NDEBUG
+        const auto msg = std::string{"Created " + std::to_string(framebuffers.size()) + " framebuffers"};
+        Logger::info(msg.c_str());
+    #endif
+}
+
 Swapchain::~Swapchain() noexcept
 {
+    for (auto &framebuffer : framebuffers) {
+        if (framebuffer != VK_NULL_HANDLE) {
+            vkDestroyFramebuffer(device, framebuffer, nullptr);
+            framebuffer = VK_NULL_HANDLE;
+        }
+    }
+
+    #ifndef NDEBUG
+        if (framebuffers.size() > 0) {
+            const auto msg = std::string{"De-allocated "} + std::to_string(framebuffers.size()) + " framebuffers in swapchain";
+            Logger::info(msg.c_str());
+        }
+    #endif
+
     for (auto &image : image_views) {
         if (image != VK_NULL_HANDLE) {
             vkDestroyImageView(device, image, nullptr);
             image = VK_NULL_HANDLE;
         }
     }
-    if constexpr(Global::IS_DEBUG_BUILD)
-        if (image_views.size() > 0)
-            Logger::info("De-allocated all images in swapchain");
+    
+    #ifndef NDEBUG
+        if (image_views.size() > 0) {
+            const auto msg = std::string{"De-allocated "} + std::to_string(image_views.size()) + " image views in swapchain";
+            Logger::info(msg.c_str());
+        }
+    #endif
     
     if (swapchain != VK_NULL_HANDLE) {
         if constexpr (Global::IS_DEBUG_BUILD) {
