@@ -15,8 +15,10 @@
 #include "mcvk/command.hpp"
 #include "mcvk/queue.hpp"
 #include "mcvk/sync.hpp"
+#include "mcvk/global.hpp"
 
 
+static constexpr auto NUMBER_OF_FENCES = 1;
 static inline void game() noexcept;
 static inline void init_vulkan(const VkComponents &components, 
                         Device::LogicalDevice &device, 
@@ -28,6 +30,8 @@ static inline void draw_frame(const Device::LogicalDevice &,
                               const Swapchain &,
                                     Command &,
                               const Pipeline &) noexcept;
+static void wait_for_prev_frame_to_finish(const Device::LogicalDevice &,
+                                          const VkFence &) noexcept;
 #ifndef NDEBUG
     static bool has_validation_layer_support() noexcept;
 #endif
@@ -86,6 +90,9 @@ static inline void game() noexcept
         draw_frame(device, in_flight_fence, swapchain, command, pipeline);
     }
 
+    // Ensure no resource is being accessed by GPU before we de-allocate resources
+    vkDeviceWaitIdle(device.get());
+    
     vkDestroyFence(device.get(), in_flight_fence, nullptr);
 }
 
@@ -96,10 +103,7 @@ static inline void draw_frame(const Device::LogicalDevice &device,
                               const Pipeline &pipeline) noexcept
 {
     // Wait for previous frame to finish
-    static constexpr auto WAIT_FOR_ALL_FENCES = VK_TRUE;
-    static constexpr auto TIMEOUT = UINT64_MAX;
-    static constexpr auto NUMBER_OF_FENCES = 1;
-    vkWaitForFences(device.get(), NUMBER_OF_FENCES, &in_flight_fence, WAIT_FOR_ALL_FENCES, TIMEOUT);
+    wait_for_prev_frame_to_finish(device, in_flight_fence);
 
     // Reset the fence to the unsignaled state
     vkResetFences(device.get(), NUMBER_OF_FENCES, &in_flight_fence);
@@ -117,6 +121,12 @@ static inline void draw_frame(const Device::LogicalDevice &device,
     command.submit(swapchain, device, in_flight_fence, image_index);
 }
 
+static inline void wait_for_prev_frame_to_finish(const Device::LogicalDevice &device, 
+                                                 const VkFence &in_flight_fence) noexcept
+{
+    static constexpr auto WAIT_FOR_ALL_FENCES = VK_TRUE;
+    vkWaitForFences(device.get(), NUMBER_OF_FENCES, &in_flight_fence, WAIT_FOR_ALL_FENCES, Global::TIMEOUT_NS);
+}
 
 // Components must be initialized before this is called, as it can affect the physical device selection
 static inline void init_vulkan(const VkComponents &components, 
