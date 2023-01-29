@@ -41,8 +41,11 @@ namespace Device
             {
                 this->device = other.device;
                 this->graphics_queue = other.graphics_queue;
+                this->presentation_queue = other.presentation_queue;
 
                 other.device = VK_NULL_HANDLE;
+                other.graphics_queue = VK_NULL_HANDLE;
+                other.presentation_queue = VK_NULL_HANDLE;
                 #ifndef NDEBUG
                     this->name = std::move(other.name);
                 #endif
@@ -52,8 +55,11 @@ namespace Device
             {
                 this->device = other.device;
                 this->graphics_queue = other.graphics_queue;
+                this->presentation_queue = other.presentation_queue;
 
                 other.device = VK_NULL_HANDLE;
+                other.graphics_queue = VK_NULL_HANDLE;
+                other.presentation_queue = VK_NULL_HANDLE;
                 #ifndef NDEBUG
                     this->name = std::move(other.name);
                 #endif
@@ -62,6 +68,8 @@ namespace Device
 
             ~LogicalDevice() noexcept; 
             constexpr const auto &get() const noexcept { return device; }
+            constexpr const auto &get_graphics_queue() const noexcept { return graphics_queue; }
+            constexpr const auto &get_presentation_queue() const noexcept { return presentation_queue; }
             #ifndef NDEBUG
                 constexpr const auto &device_name() const noexcept { return name; }
             #endif

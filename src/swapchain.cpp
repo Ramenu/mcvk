@@ -7,10 +7,10 @@
 #include <string>                       // for operator+, char_traits, to_st...
 #include "mcvk/device.hpp"              // for LogicalDevice
 #include "mcvk/global.hpp"              // for IS_DEBUG_BUILD
-#include "mcvk/logger.hpp"              // for info, error, fatal_error
 #include "mcvk/physicaldeviceinfo.hpp"  // for PhysicalDeviceInfo
 #include "mcvk/queue.hpp"               // for QueueFamilyIndices, FamilyIndex
 #include "mcvk/types.hpp"               // for u32, usize
+#include "mcvk/sync.hpp"
 
 
 inline static VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) noexcept;
@@ -136,9 +136,10 @@ Swapchain::Swapchain(const Device::PhysicalDeviceInfo physical_device,
             }
         #endif
 
-        // swapchain successfully created, so initialize the device and swapchain
+        // swapchain successfully created, so initialize the device, swapchain, and semaphore
         device = ddevice;
         swapchain = tmp;
+        image_available_semaphore = Sync::create_semaphore(device);
 
         // Now get the handles of VkImage
         u32 image_count {};
@@ -302,8 +303,17 @@ void Swapchain::initialize_framebuffers(const VkRenderPass renderpass) noexcept
     #endif
 }
 
+
 Swapchain::~Swapchain() noexcept
 {
+    if (image_available_semaphore != VK_NULL_HANDLE) {
+        if constexpr (Global::IS_DEBUG_BUILD) {
+            Logger::info("De-allocating swapchain semaphore");
+        }
+        vkDestroySemaphore(device, image_available_semaphore, nullptr);
+        image_available_semaphore = VK_NULL_HANDLE;
+    }
+
     for (auto &framebuffer : framebuffers) {
         if (framebuffer != VK_NULL_HANDLE) {
             vkDestroyFramebuffer(device, framebuffer, nullptr);

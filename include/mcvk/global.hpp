@@ -17,6 +17,7 @@ DELETE_NON_MOVABLE_DEFAULT(T)
 
 namespace Global
 {
+    static constexpr auto TIMEOUT_NS = UINT64_MAX; // this value basically disables timeout
     consteval auto FLAG_SUM(usize max)
     {
         return (1 << (max - 1)) * 2 - 1;

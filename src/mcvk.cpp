@@ -14,19 +14,26 @@
 #include "mcvk/pipeline.hpp"          // for Pipeline
 #include "mcvk/command.hpp"
 #include "mcvk/queue.hpp"
+#include "mcvk/sync.hpp"
 
 
-static void game();
-static void init_vulkan(const VkComponents &components, 
+static inline void game() noexcept;
+static inline void init_vulkan(const VkComponents &components, 
                         Device::LogicalDevice &device, 
                         Swapchain &swapchain,
                         GLFWwindow *window,
                         Queue::QueueFamilyIndices &) noexcept;
+static inline void draw_frame(const Device::LogicalDevice &,
+                              VkFence,
+                              const Swapchain &,
+                                    Command &,
+                              const Pipeline &) noexcept;
 #ifndef NDEBUG
     static bool has_validation_layer_support() noexcept;
 #endif
 
-int main() 
+
+int main() noexcept
 {
     // Before initializing the game, check if validation layers are supported
     // (only necessary for debug builds)
@@ -41,7 +48,7 @@ int main()
 }
 
 
-static void game()
+static inline void game() noexcept
 {
     static constexpr unsigned WIDTH {500}, HEIGHT {500};
     Window window {WIDTH, HEIGHT, "Minecraft"};
@@ -70,14 +77,49 @@ static void game()
     // Create command buffer
     Command command {device, queue_family_indices.get(Queue::GraphicsQueueIndex)};
 
+    // Create Vulkan synchronization primitives
+    VkFence in_flight_fence {Sync::create_fence(device.get())};
+
     while (!glfwWindowShouldClose(window.self)) [[likely]] 
     {
         glfwPollEvents();
+        draw_frame(device, in_flight_fence, swapchain, command, pipeline);
     }
+
+    vkDestroyFence(device.get(), in_flight_fence, nullptr);
 }
 
+static inline void draw_frame(const Device::LogicalDevice &device, 
+                              const VkFence in_flight_fence,
+                              const Swapchain &swapchain,
+                                    Command &command,
+                              const Pipeline &pipeline) noexcept
+{
+    // Wait for previous frame to finish
+    static constexpr auto WAIT_FOR_ALL_FENCES = VK_TRUE;
+    static constexpr auto TIMEOUT = UINT64_MAX;
+    static constexpr auto NUMBER_OF_FENCES = 1;
+    vkWaitForFences(device.get(), NUMBER_OF_FENCES, &in_flight_fence, WAIT_FOR_ALL_FENCES, TIMEOUT);
+
+    // Reset the fence to the unsignaled state
+    vkResetFences(device.get(), NUMBER_OF_FENCES, &in_flight_fence);
+
+    // Acquire image from swapchain
+    const auto image_index = swapchain.acquire_next_image();
+
+    // Reset command buffer to begin recording
+    command.reset();
+
+    // Begin recording command buffer
+    command.record(image_index, swapchain, pipeline);
+
+    // Submit command buffer to graphics queue
+    command.submit(swapchain, device, in_flight_fence, image_index);
+}
+
+
 // Components must be initialized before this is called, as it can affect the physical device selection
-static void init_vulkan(const VkComponents &components, 
+static inline void init_vulkan(const VkComponents &components, 
                         Device::LogicalDevice &device, 
                         Swapchain &swapchain,
                         GLFWwindow *window,

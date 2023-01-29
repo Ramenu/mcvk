@@ -3,6 +3,7 @@
 #include "mcvk/device.hpp"
 #include "mcvk/swapchain.hpp"
 #include "mcvk/pipeline.hpp"
+#include "mcvk/sync.hpp"
 #ifndef NDEBUG
     #include <string>
 #endif
@@ -69,16 +70,27 @@ static inline void setup_command_buffer(const Device::LogicalDevice &device,
 
 Command::Command(const Device::LogicalDevice &device,
                  u32 queue_family_index) noexcept
-    : device_handle {device.get()}
+    : device_handle {device.get()},
+      render_finished_semaphore {Sync::create_semaphore(device.get())}
 {
+    if constexpr (Global::IS_DEBUG_BUILD) {
+        assert(device_handle != VK_NULL_HANDLE);
+        assert(render_finished_semaphore != VK_NULL_HANDLE);
+    }
     setup_command_pool(device, queue_family_index, this->command_pool);
     setup_command_buffer(device, this->command_pool, this->command_buffer);
 }
 
-void Command::record_command_buffer(u32 swapchain_img_index, 
-                                    const Swapchain &swapchain,
-                                    const Pipeline &pipeline) noexcept
+void Command::record(const u32 swapchain_img_index, 
+                     const Swapchain &swapchain,
+                     const Pipeline &pipeline) noexcept
 {
+    if constexpr (Global::IS_DEBUG_BUILD) {
+        assert(this->device_handle != VK_NULL_HANDLE);
+        assert(this->command_buffer != VK_NULL_HANDLE);
+        assert(this->command_pool != VK_NULL_HANDLE);
+        assert(swapchain_img_index < swapchain.size());
+    }
     VkCommandBufferBeginInfo begin_info {};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -158,4 +170,75 @@ void Command::record_command_buffer(u32 swapchain_img_index,
     if (vkEndCommandBuffer(this->command_buffer) != VK_SUCCESS) {
         Logger::fatal_error("Failed to record command buffer");
     }
+}
+
+void Command::submit(const Swapchain &swapchain,
+                     const Device::LogicalDevice &device,
+                     const VkFence in_flight_fence,
+                     u32 swapchain_img_index) const noexcept
+{
+    if constexpr (Global::IS_DEBUG_BUILD) {
+        assert(this->device_handle != VK_NULL_HANDLE);
+        assert(this->command_buffer != VK_NULL_HANDLE);
+        assert(this->command_pool != VK_NULL_HANDLE);
+        assert(this->render_finished_semaphore != VK_NULL_HANDLE);
+    }
+
+    VkSubmitInfo submit_info {};
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    static constexpr std::array<VkPipelineStageFlags, 1> wait_stages {
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT // don't begin render pass until the image is available
+    };
+
+    // specify which semaphores to wait on before the command buffer starts execution and which
+    // stage(s) of the pipeline to wait at. We do not want to write colors to the image until
+    // it becomes available.
+    submit_info.waitSemaphoreCount = wait_stages.size(); 
+    submit_info.pWaitSemaphores = &swapchain.image_available();
+    submit_info.pWaitDstStageMask = wait_stages.data();
+
+
+    // specify command buffers to submit for execution
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &this->command_buffer;
+
+    // specify which semaphores to signal once the command buffer has finished execution
+    const std::array signal_semaphores {
+        this->render_finished_semaphore
+    };
+    submit_info.signalSemaphoreCount = signal_semaphores.size();
+    submit_info.pSignalSemaphores = signal_semaphores.data();
+
+    // fence will be signaled once the command buffer has finished execution. This allows
+    // us to know when it is safe for the command buffer to be reused. Then on the next frame
+    // the CPU will wait for the command buffer to finish executing before it records new
+    // commands to it
+    if (vkQueueSubmit(device.get_graphics_queue(), 1, &submit_info, in_flight_fence) != VK_SUCCESS) {
+        Logger::fatal_error("Failed to submit draw command buffer");
+    }
+
+    // Submit result back to swapchain so it can display it on the screen
+    VkPresentInfoKHR present_info {};
+    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+    // specify which semaphores to wait on before presentation can happen. Since we want
+    // to wait on the command buffer to finish executing, we use the semaphores
+    // that were signaled when the command buffer finished execution (in this case,
+    // 'signal_semaphores')
+    present_info.waitSemaphoreCount = signal_semaphores.size();
+    present_info.pWaitSemaphores = signal_semaphores.data();
+
+    // Specify the swapchain to present images to, and the index of the image for each swapchain.
+    // This will almost always be 1
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = &swapchain.get();
+    present_info.pImageIndices = &swapchain_img_index;
+
+    // Submit the request to present an image to the swapchain
+    if (vkQueuePresentKHR(device.get_presentation_queue(), &present_info) != VK_SUCCESS) {
+        Logger::error("Failed to present swapchain image");
+    }
+
+
 }
