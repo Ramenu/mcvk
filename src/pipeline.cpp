@@ -216,9 +216,9 @@ Pipeline::Pipeline(const Device::LogicalDevice &device, const VkFormat swapchain
 }
 
 static VkShaderModule create_shader_module(const std::string &code, 
-                                           const Device::LogicalDevice &device,
+                                           const Device::LogicalDevice &device
                                            #ifndef NDEBUG
-                                             const char *shader_file_path
+                                             ,const char *shader_file_path
                                            #endif
                                            ) noexcept
 {
