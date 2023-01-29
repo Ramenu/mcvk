@@ -1,5 +1,4 @@
 #include "mcvk/command.hpp"
-
 #include "mcvk/device.hpp"
 #include "mcvk/swapchain.hpp"
 #include "mcvk/pipeline.hpp"
@@ -7,6 +6,7 @@
 #ifndef NDEBUG
     #include <string>
 #endif
+#include <array>
 
 static inline void setup_command_pool(const Device::LogicalDevice &device,
                                       u32 queue_family_index,
