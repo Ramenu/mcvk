@@ -4,9 +4,12 @@
     
 [compiler]
     compiler = "g++"
+	args = ["-fverbose-asm"]
+	append_args = true
 
 [linker]
 	libraries = ["-lglfw", "-lvulkan"]
 
 [misc]
 	static_analysis_enabled = false
+
